@@ -1,0 +1,45 @@
+observed_name,canonical_nom,source,mismatch_reason,notes
+Mongwalu,Mongbalu,fasta,,Header spelling variant (Ituri_2026-06-30 export)
+Mongbwalu,Mongbalu,fasta,,Header spelling variant (ebola-bdbv_2026-07-03 export)
+Mungwalu,Mongbalu,fasta,,Alternate transcription in FASTA headers
+Gety,Gethy,fasta,,Common outbreak spelling variant
+Komanda,Komanda,fasta,,Direct match to MoH health zone
+Nyankunde,Nyakunde,fasta,,Common outbreak spelling variant
+Nyankunnde,Nyakunde,fasta,,Typo (double n) in FASTA headers
+Aru,Aru,fasta,,Direct match to MoH health zone
+Aungba,Aungba,fasta,,Direct match to MoH health zone
+Bambu,Bambu,fasta,,Direct match to MoH health zone
+Bunia,Bunia,fasta,,Direct match to MoH health zone
+Bunia-,Bunia,fasta,,Trailing hyphen typo in FASTA headers
+Damas,Damas,fasta,,Direct match to MoH health zone
+Katwa,Katwa,fasta,,Direct match to MoH health zone
+Kilo,Kilo,fasta,,Direct match to MoH health zone
+Lita,Lita,fasta,,Direct match to MoH health zone
+Lumumba,Bunia,fasta,health_area,FASTA location is quartier Lumumba (Aire de Santé within ZS Bunia)
+Mambasa,Mambasa,fasta,,Direct match to MoH health zone
+Mangala,Mangala,fasta,,Direct match to MoH health zone
+Nizi,Nizi,fasta,,Direct match to MoH health zone
+Nyakunde,Nyakunde,fasta,,Direct match to MoH health zone
+Rimba,Rimba,fasta,,Direct match to MoH health zone
+Rwampara,Rwampara,fasta,,Direct match to MoH health zone
+Sota,Nyakunde,fasta,health_area,FASTA location is Aire de Santé Sota (within ZS Nyakunde)
+Drodro,Drodro,fasta,,Direct match to MoH health zone
+fataki,Fataki,fasta,,Type (lowercase F)
+Mandima,Mandima,fasta,,Direct match to MoH health zone
+Nia,Nia Nia,fasta,,Spelling variant
+Nia Nia,Nia Nia,fasta,,Direct match to MoH health zone
+Nia nia,Nia Nia,fasta,,Typo (lowercase N)
+Nia-Nia,Nia Nia,fasta,,Typo (hyphen)
+Nia-Nią,Nia Nia,fasta,,Typo (hyphen + trailing diacritic U+0105)
+Niania,Nia Nia,fasta,,Typo (one word)
+Tchomia,Tchomia,fasta,,Direct match to MoH health zone
+Bahwere,Lita,fasta,,
+Mandje,Lita,fasta,,
+Sukisa,Bunia,fasta,,Bunia health zone
+Adi,Adi,fasta,,Direct match to MoH health zone
+Beni,Beni,fasta,,Direct match to MoH health zone
+Butembo,Butembo,fasta,,Direct match to MoH health zone
+Kalunguta,Kalunguta,fasta,,Direct match to MoH health zone
+Katana,Katana,fasta,,Direct match to MoH health zone
+Masereka,Masereka,fasta,,Direct match to MoH health zone
+Vuhovi,Vuhovi,fasta,,Direct match to MoH health zone

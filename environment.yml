@@ -1,0 +1,15 @@
+name: bdbv-pipeline
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.10
+  - pandas
+  - matplotlib
+  - tqdm
+  - pip
+  - mafft
+  - pip:
+    - treeswift
+    - artic-raccoon

@@ -1,0 +1,217 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/pekarj/bdbv-pipeline-temp/main/nextflow_schema.json",
+  "title": "pekarj/bdbv-pipeline-temp",
+  "description": "Automated pipeline for downloading, cleaning, and building maximum-likelihood phylogenies from Bundibugyo ebolavirus (BDBV) genome sequences hosted on Pathoplexus.",
+  "url": "https://github.com/pekarj/bdbv-pipeline-temp",
+  "type": "object",
+  "definitions": {
+    "input_options": {
+      "title": "Input Options",
+      "type": "object",
+      "fa_icon": "fas fa-terminal",
+      "description": "Define where the pipeline should find input data and save output data.",
+      "properties": {
+        "fasta": {
+          "type": "string",
+          "format": "file-path",
+          "title": "FASTA",
+          "description": "FASTA file",
+          "help_text": "pre-aligned from Pathoplexus, or unaligned if using --mafft"
+        },
+        "metadata": {
+          "type": "string",
+          "format": "file-path",
+          "title": "Metadata",
+          "description": "Pathoplexus metadata TSV",
+          "help_text": ""
+        }
+      },
+      "required": [
+        "fasta",
+        "metadata"
+      ]
+    },
+    "output_options": {
+      "title": "Output Options",
+      "type": "object",
+      "description": "Parameters for saving and naming workflow outputs.",
+      "properties": {
+        "outdir": {
+          "type": "string",
+          "format": "directory-path",
+          "default": "output",
+          "title": "Output folder name",
+          "description": "Directory for output of all user-facing files."
+        }
+      }
+    },
+    "advanced_options": {
+      "title": "Advanced Options",
+      "type": "object",
+      "description": "Advanced options for configuring processes inside the workflow.",
+      "default": "",
+      "properties": {
+        "mafft": {
+          "type": "boolean",
+          "default": false,
+          "title": "Run MAFFT alignment",
+          "description": "",
+          "help_text": "Run MAFFT alignment before cleaning (skip if sequences are already aligned from Pathoplexus)"
+        },
+        "aliases_file": {
+          "type": "string",
+          "format": "file-path",
+          "default": "data/aliases.csv",
+          "title": "Aliases file",
+          "description": "Path to the aliases CSV file.",
+          "help_text": ""
+        },
+        "trim_start": {
+          "type": "integer",
+          "default": null,
+          "title": "Trim start",
+          "description": "",
+          "help_text": "First position to keep (1-based, inclusive)"
+        },
+        "trim_end": {
+          "type": "integer",
+          "default": null,
+          "title": "Trim end",
+          "description": "",
+          "help_text": "Last position to keep (1-based, inclusive)"
+        },
+        "adar_mode": {
+          "type": "string",
+          "title": "ADAR mode",
+          "description": "Mode for ADAR processing.",
+          "enum": ["mask", "exclude_tc", "exclude_all"],
+          "help_text": "ADAR handling: mask sites, exclude T>C genomes, or exclude T>C/A>G/G>A genomes."
+        },
+        "seed": {
+          "type": "integer",
+          "default": 42,
+          "title": "Random seed",
+          "description": "Random seed for IQ-TREE reproducibility.",
+          "help_text": ""
+        },
+        "exclude_file": {
+          "type": "string",
+          "format": "file-path",
+          "default": "data/exclude_identity.txt",
+          "title": "Exclude file",
+          "description": "Identity exclusions (non-consortium, same-patient duplicates): excluded from everything.",
+          "help_text": ""
+        },
+        "exclude_quality": {
+          "type": "string",
+          "format": "file-path",
+          "default": "data/exclude_quality.txt",
+          "title": "Exclude quality file",
+          "description": "Quality exclusions (low-quality sequences): excluded from phylogenetics only.",
+          "help_text": ""
+        },
+        "outlier_file": {
+          "type": "string",
+          "format": "file-path",
+          "default": null,
+          "title": "Outlier file",
+          "description": "Path to outlier exclusions file.",
+          "help_text": ""
+        },
+        "outlier_removal_threshold": {
+          "type": "number",
+          "default": null,
+          "title": "Outlier removal threshold",
+          "description": "",
+          "help_text": "Auto-remove outliers with |z| >= this threshold (e.g. 3.0) and skip manual review"
+        },
+        "model": {
+          "type": "string",
+          "default": null,
+          "title": "Model",
+          "description": "",
+          "help_text": "Use this substitution model (e.g. GTR+F+R3) instead of running ModelFinder"
+        },
+        "min_date": {
+          "type": "string",
+          "format": "date",
+          "default": null,
+          "title": "Minimum date",
+          "description": "Remove sequences before this date (YYYY-MM-DD).",
+          "help_text": ""
+        },
+        "beast_template": {
+          "type": "string",
+          "format": "file-path",
+          "default": "templates/GTR_EGC.template.xml",
+          "title": "BEAST template",
+          "description": "Path to the BEAST template XML file.",
+          "help_text": ""
+        }
+      }
+    },
+    "miscellaneous_options": {
+      "title": "Miscellaneous Options",
+      "type": "object",
+      "fa_icon": "fas fa-file-import",
+      "description": "Everything else.",
+      "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+      "properties": {
+        "help": {
+          "type": "boolean",
+          "title": "Display help text",
+          "fa_icon": "fas fa-question-circle",
+          "hidden": true
+        },
+        "version": {
+          "type": "boolean",
+          "title": "Display version",
+          "description": "Display version and exit.",
+          "fa_icon": "fas fa-question-circle",
+          "hidden": true
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/input_options"
+    },
+    {
+      "$ref": "#/definitions/output_options"
+    },
+    {
+      "$ref": "#/definitions/advanced_options"
+    },
+    {
+      "$ref": "#/definitions/miscellaneous_options"
+    }
+  ],
+  "properties": {
+    "aws_image_prefix": {
+      "type": "string",
+      "title": "AWS image prefix",
+      "hidden": true
+    },
+    "aws_queue": {
+      "type": "string",
+      "title": "AWS queue",
+      "hidden": true
+    },
+    "monochrome_logs": {
+      "type": "boolean"
+    },
+    "validate_params": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_hidden_params": {
+      "type": "boolean"
+    }
+  },
+  "docs": {
+    "intro": "\nAutomated pipeline for downloading, cleaning, and building maximum-likelihood phylogenies from Bundibugyo ebolavirus (BDBV) genome sequences hosted on Pathoplexus.\n\n",
+    "links": "## Useful links\n\n* [nextflow](https://www.nextflow.io/)\n* [docker](https://www.docker.com/products/docker-desktop)"
+  }
+}

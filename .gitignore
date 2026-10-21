@@ -1,0 +1,15 @@
+test_*/
+*.treefile
+*.iqtree
+*.log
+*.state
+*.ckp.gz
+*.model.gz
+*.mldist
+*.bionj
+*.uniqueseq.phy
+*.aln
+*.fasta
+*.pdf
+*.png
+__pycache__/

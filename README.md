@@ -103,3 +103,29 @@ python scripts/run_pipeline.py ... --skip-to filter_outliers --adar-mode mask
 | `--stop-after STEP` | Stop after a specific step |
 | `--seed N` | IQ-TREE random seed (default: 42) |
 | `--min-date YYYY-MM-DD` | Remove sequences before this date; same-year sequences are flagged |
+
+### 3. Generate BEAST XMLs
+
+After the pipeline completes, generate BEAST XML files from the final alignment using template files:
+
+```bash
+python scripts/generate_beast_xml.py \
+    -a data/YYYYMMDD/prefix.ADAR_masked.final.aln \
+    -o data/YYYYMMDD \
+    -p prefix.n978 \
+    --template-egc templates/GTR_EGC.template.xml \
+    --template-sg templates/GTR_SG.template.xml \
+    --anchor-date 2025-11-08
+```
+
+This swaps the alignment and taxa into the template, updates SkyGrid parameters (weekly grid intervals from anchor date to the latest sample), adjusts operator weights for the dataset size, and sets MCMC chain length / logging intervals.
+
+| Flag | Description |
+|------|-------------|
+| `--template-egc` | Exponential growth coalescent template |
+| `--template-sg` | SkyGrid coalescent template (requires `--anchor-date`) |
+| `--anchor-date` | SkyGrid anchor date — grid extends from this date to the latest sample |
+| `--chain-length` | MCMC chain length (default: 500M) |
+| `--log-every` | Log sampling interval (default: 50,000) |
+
+Templates are in `templates/` with placeholder taxa and N-filled sequences. The script replaces these with the real data.

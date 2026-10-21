@@ -12,4 +12,5 @@ dependencies:
   - mafft
   - pip:
     - treeswift
+    - baltic<1
     - artic-raccoon

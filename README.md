@@ -129,3 +129,43 @@ This swaps the alignment and taxa into the template, updates SkyGrid parameters 
 | `--log-every` | Log sampling interval (default: 50,000) |
 
 Templates are in `templates/` with placeholder taxa and N-filled sequences. The script replaces these with the real data.
+
+### 4. One-command update
+
+`run_update.py` chains download → pipeline → health checks → BEAST XMLs into a single command:
+
+```bash
+python scripts/run_update.py \
+    --previous-data data/20260915 \
+    --template-sg templates/GTR_SG.template.xml \
+    --template-egc templates/GTR_EGC.template.xml \
+    --anchor-date 2025-11-08
+```
+
+This automatically:
+- Downloads the latest sequences from Pathoplexus
+- Checks for new genomes (exits early if count is unchanged)
+- Merges exclude lists (identity + quality + pending)
+- Runs the full pipeline with auto-outlier removal
+- Runs health checks comparing to the previous dataset
+- Auto-appends `duplicate_sample` flags to `data/exclude_pending.txt`
+- Generates BEAST XMLs
+
+Use `--skip-download`, `--skip-pipeline`, or `--skip-beast-xmls` to skip individual steps.
+
+### 5. Health checks
+
+`health_checks.py` compares current and previous pipeline runs:
+
+```bash
+python scripts/health_checks.py --current data/20261012 --previous data/20260915 --prefix Ituri2026.DRC_trimmed
+```
+
+Per-sequence flags: `high_adar`, `high_Ns`, `low_coverage`, `near_outlier`, `many_gaps`, `long_branch`, `duplicate_sample`, `phylo_conflict`.
+
+Dataset-level checks: outlier count, clock rate shift, R², ADAR branch count, genome count, version changes/retractions.
+
+## Environment notes
+
+- **raccoon** requires `baltic<1` (pinned in `environment.yml`)
+- **IQ-TREE** must be installed separately (not available via conda for all platforms)

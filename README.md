@@ -124,7 +124,7 @@ This swaps the alignment and taxa into the template, updates SkyGrid parameters 
 |------|-------------|
 | `--template-egc` | Exponential growth coalescent template |
 | `--template-sg` | SkyGrid coalescent template (requires `--anchor-date`) |
-| `--anchor-date` | SkyGrid anchor date — grid extends from this date to the latest sample |
+| `--anchor-date` | SkyGrid anchor date — grid extends from this date to the latest sample. We currently use `2025-11-08`. |
 | `--chain-length` | MCMC chain length (default: 500M) |
 | `--log-every` | Log sampling interval (default: 50,000) |
 

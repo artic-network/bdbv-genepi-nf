@@ -10,6 +10,7 @@ dependencies:
   - tqdm
   - pip
   - mafft
+  - iqtree>=3
   - pip:
     - treeswift
     - baltic<1

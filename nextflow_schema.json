@@ -127,6 +127,27 @@
         }
       }
     },
+    "review_options": {
+      "title": "Review Options",
+      "type": "object",
+      "description": "Options for the manual review points and for keeping intermediate files.",
+      "properties": {
+        "outlier_file": {
+          "type": "string",
+          "title": "Outlier file",
+          "description": "Reviewed outlier exclusion file; continues from outlier filtering",
+          "help_text": "Use with -resume after editing a copy of the detected outliers file in temporal_root/. Overrides --outlier_removal_threshold.",
+          "format": "file-path"
+        },
+        "output_intermediates": {
+          "type": "boolean",
+          "title": "Output intermediates",
+          "description": "Also publish the MAFFT and pre-filtered alignments",
+          "help_text": "Written to the intermediates/ folder of the output directory.",
+          "default": false
+        }
+      }
+    },
     "additional_options": {
       "title": "Additional Options",
       "type": "object",
@@ -258,10 +279,13 @@
       "$ref": "#/definitions/output_options"
     },
     {
-      "$ref": "#/definitions/tree_options"
+      "$ref": "#/definitions/design_options"
     },
     {
       "$ref": "#/definitions/review_options"
+    },
+    {
+      "$ref": "#/definitions/additional_options"
     },
     {
       "$ref": "#/definitions/beast_options"

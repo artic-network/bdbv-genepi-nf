@@ -74,7 +74,7 @@ nextflow run . <same parameters> -resume
 | `--full_health_check` | Health checks on all genomes, not just new ones |
 | `--stop_after_health_checks` | Stop for review point 2 |
 | `--beast_xml false` | Skip BEAST XML generation |
-| `--template_egc`, `--template_sg`, `--template_lgc` | BEAST templates (EGC and SG by default, LGC off) |
+| `--template_egc`, `--template_sg`, `--template_lgc` | BEAST templates; one XML per template given. EGC and SG by default, LGC off. Pass your own file to use a custom template, or `false` to skip one (e.g. `--template_sg false`) |
 | `--anchor_date` | SkyGrid anchor date (default `2025-11-08`) |
 
 See `nextflow_schema.json` for all options.

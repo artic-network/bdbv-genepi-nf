@@ -181,6 +181,8 @@ def main():
                         help='EGC (exponential growth coalescent) template XML')
     parser.add_argument('--template-sg', default=None,
                         help='SkyGrid template XML')
+    parser.add_argument('--template-lgc', default=None,
+                        help='LGC (logistic growth coalescent) template XML')
     parser.add_argument('--anchor-date', default=None,
                         help='SkyGrid anchor date (YYYY-MM-DD). Required for SkyGrid templates.')
     parser.add_argument('--chain-length', type=int, default=500_000_000,
@@ -193,8 +195,8 @@ def main():
         print("ERROR: --anchor-date is required when using --template-sg", file=sys.stderr)
         sys.exit(1)
 
-    if not args.template_egc and not args.template_sg:
-        print("ERROR: provide at least one of --template-egc or --template-sg", file=sys.stderr)
+    if not args.template_egc and not args.template_sg and not args.template_lgc:
+        print("ERROR: provide at least one of --template-egc, --template-sg, or --template-lgc", file=sys.stderr)
         sys.exit(1)
 
     args.outdir.mkdir(parents=True, exist_ok=True)
@@ -215,6 +217,12 @@ def main():
         out_path = args.outdir / f"{args.prefix}.GTR_SG.xml"
         generate_xml(Path(args.template_sg), headers, seqs,
                      sg_params, args.prefix, args.chain_length, args.log_every, out_path)
+
+    if args.template_lgc:
+        print(f"\nGenerating LGC XML from {args.template_lgc}")
+        out_path = args.outdir / f"{args.prefix}.GTR_LGC.xml"
+        generate_xml(Path(args.template_lgc), headers, seqs,
+                     None, args.prefix, args.chain_length, args.log_every, out_path)
 
     print("\nDone.")
 

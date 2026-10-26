@@ -139,6 +139,7 @@ python scripts/generate_beast_xml.py \
     -p prefix.n978 \
     --template-egc templates/GTR_EGC.template.xml \
     --template-sg templates/GTR_SG.template.xml \
+    --template-lgc templates/GTR_LGC.template.xml \
     --anchor-date 2025-11-08
 ```
 
@@ -148,7 +149,8 @@ This swaps the alignment and taxa into the template, updates SkyGrid parameters 
 |------|-------------|
 | `--template-egc` | Exponential growth coalescent template |
 | `--template-sg` | SkyGrid coalescent template (requires `--anchor-date`) |
-| `--anchor-date` | SkyGrid anchor date — grid extends from this date to the latest sample |
+| `--template-lgc` | Logistic growth coalescent template |
+| `--anchor-date` | SkyGrid anchor date — grid extends from this date to the latest sample. We currently use `2025-11-08`. |
 | `--chain-length` | MCMC chain length (default: 500M) |
 | `--log-every` | Log sampling interval (default: 50,000) |
 

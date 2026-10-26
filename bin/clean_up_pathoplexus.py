@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pandas as pd
 from datetime import datetime
 from pathlib import Path

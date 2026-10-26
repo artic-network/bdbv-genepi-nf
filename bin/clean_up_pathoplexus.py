@@ -57,6 +57,7 @@ parser.add_argument("-ts", "--trim_start", type=int, required=False, help="First
 parser.add_argument("-te", "--trim_end", type=int, required=False, help="Last position to keep (1-based, inclusive).")
 parser.add_argument("-e", "--exclude-files", type=str, nargs='*', default=[], help="One or more text files with accession IDs to exclude (one per line, # comments allowed).")
 parser.add_argument("-p", "--prefix", type=str, required=True, help="Prefix for the output file.")
+parser.add_argument("--missing-aliases-out", type=str, default=None, help="Write admin2 values missing from the aliases file to this file (only if there are any).")
 parser.add_argument("--min-date", type=str, default=None, help="Remove sequences with date before this (YYYY-MM-DD). Sequences in the same year are flagged with a warning.")
 
 args = parser.parse_args()
@@ -228,6 +229,11 @@ if unknown_admin2:
     print(f"\nWARNING: {len(unknown_admin2)} admin2 values not in aliases file:")
     for name in sorted(unknown_admin2):
         print(f"  {name}")
+    if args.missing_aliases_out:
+        with open(args.missing_aliases_out, 'w') as f:
+            f.write(f"# {len(unknown_admin2)} admin2 values not in the aliases file; add them to data/aliases.csv\n")
+            for name in sorted(unknown_admin2):
+                f.write(f"{name}\n")
 
 # Write output
 out_path = f"{args.prefix}.aln"

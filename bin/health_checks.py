@@ -22,7 +22,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 def find_file(directory, pattern):
-    matches = sorted(Path(directory).glob(pattern))
+    matches = sorted(Path(directory).rglob(pattern))
     return matches[-1] if matches else None
 
 

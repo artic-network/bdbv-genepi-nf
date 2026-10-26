@@ -58,7 +58,7 @@ workflow {
       outliers_ch = channel.value(file("${params.outlier_file}", checkIfExists:true))
   } else {
       log.info "Stopping after temporal rooting for outlier review (no --outlier_removal_threshold or --outlier_file)."
-      log.info "Edit a copy of ${params.outdir}/${adar_prefix}.outliers.txt, then rerun with -resume --outlier_file <file>"
+      log.info "Edit a copy of ${params.outdir}/temporal_root/${adar_prefix}.outliers.txt, then rerun with -resume --outlier_file <file>"
   }
 
   if ( outliers_ch != null ) {

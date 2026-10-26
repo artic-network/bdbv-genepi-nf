@@ -80,8 +80,7 @@
         "prefix": {
           "type": "string",
           "title": "Prefix",
-          "description": "Prefix for output file names",
-          "default": "bdbv-pipeline"
+          "description": "Prefix for output file names (default: bdbv_<run_name>, e.g. bdbv_20261026)"
         },
         "run_name": {
           "type": "string",

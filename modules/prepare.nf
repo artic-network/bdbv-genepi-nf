@@ -1,7 +1,5 @@
 process mafft {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
-
   input:
     path fasta
 
@@ -16,8 +14,6 @@ process mafft {
 
 process clean {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
-
   input:
     path fasta
     path metadata
@@ -26,6 +22,7 @@ process clean {
   output:
     path "${params.prefix}.cleaned.aln", emit: aln
     path "${params.prefix}.cleaned.log"
+    path "missing_aliases.txt", optional: true
     path "${params.prefix}.cleaned.flagged_early_dates.txt", optional: true
 
   script:
@@ -37,14 +34,12 @@ process clean {
     if ( params.min_date )
         extra += " --min-date ${params.min_date}"
     """
-    clean_up_pathoplexus.py -f ${fasta} -m ${metadata} -a ${aliases} -p ${params.prefix}.cleaned ${extra} \
+    clean_up_pathoplexus.py -f ${fasta} -m ${metadata} -a ${aliases} -p ${params.prefix}.cleaned --missing-aliases-out missing_aliases.txt ${extra} \
         | tee ${params.prefix}.cleaned.log
     """
 }
 
 process qc_basic {
-
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
 
   input:
     path alignment
@@ -61,8 +56,6 @@ process qc_basic {
 
 // Used as pre_filter (exclusion lists) and filter_outliers (temporal outliers)
 process filter_exclude {
-
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
 
   input:
     path alignment

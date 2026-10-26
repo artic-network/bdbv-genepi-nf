@@ -1,7 +1,5 @@
 process raccoon {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode, saveAs: { fn -> fn.replace("raccoon_output/", "") }
-
   input:
     tuple path(alignment), path(treefile), path(statefile)
 
@@ -17,8 +15,6 @@ process raccoon {
 }
 
 process adar_mask {
-
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
 
   input:
     tuple path(alignment), path(treefile), path(statefile)
@@ -37,8 +33,6 @@ process adar_mask {
 }
 
 process qc_phylo {
-
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
 
   input:
     tuple path(phylo_flags), path(branch_snps)

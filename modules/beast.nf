@@ -1,7 +1,5 @@
 process beast_xml {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
-
   input:
     path alignment
     path templates

@@ -23,7 +23,7 @@ Downloads from Pathoplexus (unless `--fasta` and `--metadata` are given), builds
 nextflow run . --outdir data/YYYYMMDD --scope drc --min_date 2026-05-01 --adar_mode mask --outlier_removal_threshold 3
 ```
 
-To use files you have already downloaded, add `--fasta data/YYYYMMDD/aligned.fasta --metadata data/YYYYMMDD/metadata.tsv`. Output file names start with `--prefix` (default `bdbv-pipeline`).
+To use files you have already downloaded, add `--fasta data/YYYYMMDD/aligned.fasta --metadata data/YYYYMMDD/metadata.tsv`. Output file names start with `--prefix` (default `bdbv_<run_name>`, e.g. `bdbv_20261026`).
 
 ## Update run
 
@@ -42,7 +42,7 @@ The report is written to `health_check_report.txt`. Unlike `run_update.py`, the 
 
 There are two places where you may want to stop and review. Resume with `-resume` so completed steps are reused from cache, keeping the same `--outdir`, `--prefix` and input parameters.
 
-**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in the output folder, copy the outliers file, edit the copy, then resume:
+**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `temporal_root/`, copy the outliers file, edit the copy, then resume:
 
 ```bash
 nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
@@ -59,7 +59,8 @@ nextflow run . <same parameters> -resume
 | Parameter | Description |
 |-----------|-------------|
 | `--outdir` | Output folder (default `output`) |
-| `--prefix` | Output file name prefix (default `bdbv-pipeline`) |
+| `--prefix` | Output file name prefix (default `bdbv_<run_name>`, e.g. `bdbv_20261026`) |
+| `--run_name` | Label used in the default prefix and download file names (default: today, `YYYYMMDD`) |
 | `--fasta`, `--metadata` | Use these instead of downloading |
 | `--scope`, `--organism` | Download scope (`drc`, `drc,kenya`, `outbreak`) and LAPIS organism |
 | `--mafft` | Run MAFFT before cleaning |

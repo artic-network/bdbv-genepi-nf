@@ -1,7 +1,5 @@
 process download {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
-
   output:
     path "${params.organism}_aligned-nuc_${params.run_name}.fasta", emit: fasta
     path "${params.organism}_metadata_${params.run_name}.tsv", emit: metadata

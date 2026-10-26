@@ -2,8 +2,6 @@
 // pending exclusion list and new retractions to outdir instead of editing files in data/.
 process health_checks {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
-
   input:
     path current_files, stageAs: "current/*"
     path metadata, stageAs: "current/bdbv_metadata_current.tsv"

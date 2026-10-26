@@ -1,8 +1,6 @@
 // Imported as temporal_root (with --iterate, from ext.args) and final_root
 process temporal_root {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
-
   input:
     path tree
     val prefix
@@ -20,8 +18,6 @@ process temporal_root {
 }
 
 process select_outliers {
-
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
 
   input:
     path detected_outliers

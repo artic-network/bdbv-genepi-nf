@@ -1,8 +1,6 @@
 // iqtree1: ML tree + ModelFinder (or fixed --model) + ancestral reconstruction
 process iqtree_ancestral {
 
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
-
   input:
     path alignment
 
@@ -26,8 +24,6 @@ process iqtree_ancestral {
 
 // Imported as iqtree_adar (iqtree2) and iqtree_final (iqtree3); extra flags come from ext.args
 process iqtree {
-
-  publishDir "${params.outdir}", mode: params.publish_dir_mode
 
   input:
     path alignment

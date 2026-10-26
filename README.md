@@ -13,15 +13,39 @@ conda env create -f environment.yml
 conda activate bdbv-pipeline
 ```
 
-[IQ-TREE 2/3](http://www.iqtree.org/) must be installed separately and available on `PATH` as `iqtree3`.
+`environment.yml` includes IQ-TREE 3, which conda can't install on every platform. If it fails on yours, remove that line and install [IQ-TREE 2/3](http://www.iqtree.org/) separately, available on `PATH` as `iqtree3`. The Docker image used by the Nextflow pipeline always includes it.
 
 ### Data files
 
 - **`data/aliases.csv`** — Maps observed admin2 location names to canonical names. This file needs to be updated periodically as new sequences with novel location spellings are submitted.
 - **`data/exclude_identity.txt`** — Accessions to exclude from all analyses (duplicates, non-consortium, withdrawn).
 - **`data/exclude_quality.txt`** — Accessions to exclude from phylogenetic analyses only (low quality).
+- **`data/exclude_pending.txt`** — Accessions temporarily excluded while under review (e.g. flagged `duplicate_sample` by health checks).
+- **`data/exclude_pending.txt`** — Accessions temporarily excluded while under review.
 
-## Usage
+## Running with Nextflow
+
+The Nextflow pipeline (`main.nf`) runs download → tree building → health checks → BEAST XMLs, with each step as a separate process. By default every step runs in Docker.
+
+### Setup
+
+Install [Nextflow](https://www.nextflow.io/) (≥ 23.04) and Docker, then build the image from this folder:
+
+```bash
+docker build -t bdbv-pipeline:latest .
+```
+
+On Apple Silicon add `--platform linux/amd64`. To use conda instead of Docker, add `-profile conda` to the commands below.
+
+### Initial run
+
+Downloads the latest sequences from Pathoplexus and builds the trees and BEAST XMLs:
+
+```bash
+nextflow run . --outdir data/YYYYMMDD --min_date 2026-05-01 --outlier_removal_threshold 3
+```
+
+To use files you've already downloaded inst
 
 ### 1. Download sequences
 
@@ -168,4 +192,4 @@ Dataset-level checks: outlier count, clock rate shift, R², ADAR branch count, g
 ## Environment notes
 
 - **raccoon** requires `baltic<1` (pinned in `environment.yml`)
-- **IQ-TREE** must be installed separately (not available via conda for all platforms)
+- **IQ-TREE** is in `environment.yml` and so in the Docker image, but is not available via conda for all platforms. If it is missing when running the scripts directly, install it separately

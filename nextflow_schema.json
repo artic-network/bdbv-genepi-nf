@@ -10,144 +10,224 @@
       "title": "Input Options",
       "type": "object",
       "fa_icon": "fas fa-terminal",
-      "description": "Define where the pipeline should find input data and save output data.",
+      "description": "Where the pipeline finds input data. Leave FASTA unset to download from Pathoplexus.",
       "properties": {
         "fasta": {
           "type": "string",
-          "format": "file-path",
           "title": "FASTA",
-          "description": "FASTA file",
-          "help_text": "pre-aligned from Pathoplexus, or unaligned if using --mafft"
+          "description": "Aligned FASTA file",
+          "help_text": "Pre-aligned from Pathoplexus, or unaligned if using --mafft. If unset, sequences are downloaded from Pathoplexus.",
+          "format": "file-path"
         },
         "metadata": {
           "type": "string",
-          "format": "file-path",
           "title": "Metadata",
           "description": "Pathoplexus metadata TSV",
-          "help_text": ""
+          "help_text": "Required when --fasta is given.",
+          "format": "file-path"
+        },
+        "organism": {
+          "type": "string",
+          "title": "Organism",
+          "description": "LAPIS organism slug used for download",
+          "default": "ebola-bdbv"
+        },
+        "scope": {
+          "type": "string",
+          "title": "Download scope",
+          "description": "Countries to download: drc, a comma-separated list (e.g. drc,kenya), or outbreak",
+          "help_text": "drc applies the Pathogen Genomic Lab group filter.",
+          "default": "drc"
+        },
+        "aliases_file": {
+          "type": "string",
+          "title": "Aliases file",
+          "description": "CSV mapping observed admin2 location names to canonical names",
+          "format": "file-path"
+        },
+        "exclude_file": {
+          "type": "string",
+          "title": "Identity exclusions",
+          "description": "Accessions to exclude from everything (duplicates, non-consortium, withdrawn)",
+          "format": "file-path"
+        },
+        "exclude_quality": {
+          "type": "string",
+          "title": "Quality exclusions",
+          "description": "Accessions to exclude from phylogenetics (low quality)",
+          "format": "file-path"
+        },
+        "exclude_pending": {
+          "type": "string",
+          "title": "Pending exclusions",
+          "description": "Accessions temporarily excluded while under review",
+          "format": "file-path"
         }
-      },
-      "required": [
-        "fasta",
-        "metadata"
-      ]
+      }
     },
     "output_options": {
       "title": "Output Options",
       "type": "object",
-      "description": "Parameters for saving and naming workflow outputs.",
+      "description": "Where and how outputs are written.",
       "properties": {
         "outdir": {
           "type": "string",
+          "title": "Output folder",
+          "description": "Folder for all output files",
           "format": "directory-path",
-          "default": "output",
-          "title": "Output folder name",
-          "description": "Directory for output of all user-facing files."
+          "default": "output"
+        },
+        "prefix": {
+          "type": "string",
+          "title": "Prefix",
+          "description": "Prefix for output file names",
+          "default": "bdbv-pipeline"
+        },
+        "run_name": {
+          "type": "string",
+          "title": "Run name",
+          "description": "Label for this run used in downloaded file names and retractions (default: today, YYYYMMDD)"
         }
       }
     },
-    "advanced_options": {
-      "title": "Advanced Options",
+    "tree_options": {
+      "title": "Tree Building Options",
       "type": "object",
-      "description": "Advanced options for configuring processes inside the workflow.",
-      "default": "",
+      "description": "Options for cleaning, ADAR handling and tree building.",
       "properties": {
         "mafft": {
           "type": "boolean",
-          "default": false,
-          "title": "Run MAFFT alignment",
-          "description": "",
-          "help_text": "Run MAFFT alignment before cleaning (skip if sequences are already aligned from Pathoplexus)"
-        },
-        "aliases_file": {
-          "type": "string",
-          "format": "file-path",
-          "default": "data/aliases.csv",
-          "title": "Aliases file",
-          "description": "Path to the aliases CSV file.",
-          "help_text": ""
+          "title": "Run MAFFT",
+          "description": "Align sequences with MAFFT before cleaning",
+          "help_text": "Not needed for pre-aligned Pathoplexus sequences.",
+          "default": false
         },
         "trim_start": {
           "type": "integer",
-          "default": null,
           "title": "Trim start",
-          "description": "",
-          "help_text": "First position to keep (1-based, inclusive)"
+          "description": "First alignment position to keep (1-based, inclusive)"
         },
         "trim_end": {
           "type": "integer",
-          "default": null,
           "title": "Trim end",
-          "description": "",
-          "help_text": "Last position to keep (1-based, inclusive)"
+          "description": "Last alignment position to keep (1-based, inclusive)"
+        },
+        "min_date": {
+          "type": "string",
+          "title": "Minimum date",
+          "description": "Remove sequences dated before this (YYYY-MM-DD)",
+          "help_text": "Sequences from the same year but before this date are flagged."
+        },
+        "model": {
+          "type": "string",
+          "title": "Substitution model",
+          "description": "Use this model (e.g. GTR+F+R3) instead of running ModelFinder"
+        },
+        "seed": {
+          "type": "integer",
+          "title": "Seed",
+          "description": "IQ-TREE random seed",
+          "default": 42
         },
         "adar_mode": {
           "type": "string",
           "title": "ADAR mode",
-          "description": "Mode for ADAR processing.",
-          "enum": ["mask", "exclude_tc", "exclude_all"],
-          "help_text": "ADAR handling: mask sites, exclude T>C genomes, or exclude T>C/A>G/G>A genomes."
-        },
-        "seed": {
-          "type": "integer",
-          "default": 42,
-          "title": "Random seed",
-          "description": "Random seed for IQ-TREE reproducibility.",
-          "help_text": ""
-        },
-        "exclude_file": {
-          "type": "string",
-          "format": "file-path",
-          "default": "data/exclude_identity.txt",
-          "title": "Exclude file",
-          "description": "Identity exclusions (non-consortium, same-patient duplicates): excluded from everything.",
-          "help_text": ""
-        },
-        "exclude_quality": {
-          "type": "string",
-          "format": "file-path",
-          "default": "data/exclude_quality.txt",
-          "title": "Exclude quality file",
-          "description": "Quality exclusions (low-quality sequences): excluded from phylogenetics only.",
-          "help_text": ""
+          "description": "How to handle ADAR-edited genomes",
+          "help_text": "mask: mask ADAR sites; exclude_tc: exclude T>C genomes; exclude_all: exclude T>C/A>G/G>A genomes. Health checks currently only work with mask.",
+          "default": "mask",
+          "enum": [
+            "mask",
+            "exclude_tc",
+            "exclude_all"
+          ]
+        }
+      }
+    },
+    "review_options": {
+      "title": "Review Options",
+      "type": "object",
+      "description": "Control the two points where the pipeline can stop for manual review.",
+      "properties": {
+        "outlier_removal_threshold": {
+          "type": "number",
+          "title": "Outlier removal threshold",
+          "description": "Auto-remove temporal outliers with |z| >= this value and continue",
+          "help_text": "If neither this nor --outlier_file is given, the pipeline stops after temporal rooting for review."
         },
         "outlier_file": {
           "type": "string",
-          "format": "file-path",
-          "default": null,
           "title": "Outlier file",
-          "description": "Path to outlier exclusions file.",
-          "help_text": ""
+          "description": "Reviewed outlier exclusion file; continues from outlier filtering",
+          "help_text": "Use with -resume after editing a copy of the detected outliers file.",
+          "format": "file-path"
         },
-        "outlier_removal_threshold": {
-          "type": "number",
-          "default": null,
-          "title": "Outlier removal threshold",
-          "description": "",
-          "help_text": "Auto-remove outliers with |z| >= this threshold (e.g. 3.0) and skip manual review"
-        },
-        "model": {
+        "previous_data": {
           "type": "string",
-          "default": null,
-          "title": "Model",
-          "description": "",
-          "help_text": "Use this substitution model (e.g. GTR+F+R3) instead of running ModelFinder"
+          "title": "Previous data",
+          "description": "Previous run folder to compare against in health checks",
+          "help_text": "Set for update runs; health checks are skipped when unset.",
+          "format": "directory-path"
         },
-        "min_date": {
-          "type": "string",
-          "format": "date",
-          "default": null,
-          "title": "Minimum date",
-          "description": "Remove sequences before this date (YYYY-MM-DD).",
-          "help_text": ""
+        "full_health_check": {
+          "type": "boolean",
+          "title": "Full health check",
+          "description": "Run health checks on all genomes, not just new ones",
+          "default": false
         },
-        "beast_template": {
+        "stop_after_health_checks": {
+          "type": "boolean",
+          "title": "Stop after health checks",
+          "description": "Stop before generating BEAST XMLs so health check flags can be reviewed",
+          "default": false
+        }
+      }
+    },
+    "beast_options": {
+      "title": "BEAST Options",
+      "type": "object",
+      "description": "BEAST XML generation from the final alignment.",
+      "properties": {
+        "beast_xml": {
+          "type": "boolean",
+          "title": "Generate BEAST XMLs",
+          "description": "Generate BEAST XMLs from the final alignment",
+          "default": true
+        },
+        "template_egc": {
           "type": "string",
-          "format": "file-path",
-          "default": "templates/GTR_EGC.template.xml",
-          "title": "BEAST template",
-          "description": "Path to the BEAST template XML file.",
-          "help_text": ""
+          "title": "EGC template",
+          "description": "Exponential growth coalescent template",
+          "help_text": "Set to null to skip.",
+          "format": "file-path"
+        },
+        "template_sg": {
+          "type": "string",
+          "title": "SkyGrid template",
+          "description": "SkyGrid coalescent template (uses --anchor_date)",
+          "help_text": "Set to null to skip.",
+          "format": "file-path"
+        },
+        "template_lgc": {
+          "type": "string",
+          "title": "LGC template",
+          "description": "Logistic growth coalescent template",
+          "format": "file-path"
+        },
+        "anchor_date": {
+          "type": "string",
+          "title": "Anchor date",
+          "description": "SkyGrid anchor date; the grid extends from this date to the latest sample",
+          "default": "2025-11-08"
+        },
+        "chain_length": {
+          "type": "integer",
+          "title": "Chain length",
+          "description": "MCMC chain length (script default: 500,000,000)"
+        },
+        "log_every": {
+          "type": "integer",
+          "title": "Log every",
+          "description": "Log sampling interval (script default: 50,000)"
         }
       }
     },
@@ -182,7 +262,13 @@
       "$ref": "#/definitions/output_options"
     },
     {
-      "$ref": "#/definitions/advanced_options"
+      "$ref": "#/definitions/tree_options"
+    },
+    {
+      "$ref": "#/definitions/review_options"
+    },
+    {
+      "$ref": "#/definitions/beast_options"
     },
     {
       "$ref": "#/definitions/miscellaneous_options"

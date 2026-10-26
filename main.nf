@@ -56,9 +56,6 @@ workflow {
       outliers_ch = select_outliers(temporal_root.out.outliers)
   } else if ( params.outlier_file ) {
       outliers_ch = channel.value(file("${params.outlier_file}", checkIfExists:true))
-  } else {
-      log.info "Stopping after temporal rooting for outlier review (no --outlier_removal_threshold or --outlier_file)."
-      log.info "Edit a copy of ${params.outdir}/temporal_root/${adar_prefix}.outliers.txt, then rerun with -resume --outlier_file <file>"
   }
 
   if ( outliers_ch != null ) {
@@ -78,11 +75,45 @@ workflow {
 
       // Review point 2, health checks: optionally stop before BEAST XMLs
       if ( params.previous_data && params.stop_after_health_checks ) {
-          log.info "Stopping after health checks for review. Rerun with -resume and without --stop_after_health_checks to generate BEAST XMLs."
+          // handled in workflow.onComplete so the message is the last thing printed
       } else if ( params.beast_xml ) {
           templates_ch = channel.fromPath([params.template_egc, params.template_sg, params.template_lgc].findAll { it }, checkIfExists:true)
               .collect()
           beast_xml(filter_outliers.out, templates_ch, adar_prefix)
       }
+  }
+}
+
+// Messages for the two review points. These are printed on completion so they are the last thing on screen.
+workflow.onComplete {
+  if ( !workflow.success )
+      return
+  def adar_tag = params.adar_mode == 'mask' ? 'ADAR_masked' : 'ADAR_excluded'
+  def outliers = "${params.outdir}/temporal_root/${params.prefix}.${adar_tag}.outliers.txt"
+  if ( params.outlier_removal_threshold == null && !params.outlier_file ) {
+      log.info """
+      ==========================================================================
+      Stopped after temporal rooting for outlier review
+      (no --outlier_removal_threshold or --outlier_file given).
+
+      1. Review the RTT plot and detected outliers in ${params.outdir}/temporal_root/
+      2. Edit a copy of: ${outliers}
+      3. Resume, passing your edited file:
+
+         ${workflow.commandLine} -resume --outlier_file <edited_outliers_file>
+      ==========================================================================
+      """.stripIndent()
+  } else if ( params.previous_data && params.stop_after_health_checks ) {
+      log.info """
+      ==========================================================================
+      Stopped after health checks for review (--stop_after_health_checks).
+
+      1. Review ${params.outdir}/health_checks/health_check_report.txt
+      2. Update the exclusion lists if needed
+      3. Resume without --stop_after_health_checks to generate the BEAST XMLs:
+
+         ${workflow.commandLine.replace('--stop_after_health_checks', '').replaceAll(/\s+/, ' ').trim()} -resume
+      ==========================================================================
+      """.stripIndent()
   }
 }

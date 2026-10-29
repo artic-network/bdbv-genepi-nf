@@ -108,13 +108,12 @@ parser = argparse.ArgumentParser(
   [review outliers]
   filter_outliers → iqtree3 → final_root
 
-Exclusion files:
-  --exclude-file    Identity (non-consortium, same-patient duplicates): removed from everything
-  --exclude-quality Quality (low-quality sequences): removed from phylogenetics only
-
 By default, runs clean through temporal_root and stops for outlier review.
 Use --skip-to to resume from any step. Use --stop-after to stop early.
-Use --outlier-removal-threshold 3 to auto-remove outliers and run straight through.""",
+Use --outlier-removal-threshold 3 to auto-remove outliers and run straight through.
+
+Note: This script is the inner pipeline engine. For the full workflow
+(download + quality report + pipeline + health checks), use bin/run.py.""",
     formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("-f", "--fasta", required=True, help="FASTA file (pre-aligned from Pathoplexus, or unaligned if using --mafft)")
 parser.add_argument("-m", "--metadata", required=True, help="Pathoplexus metadata TSV")

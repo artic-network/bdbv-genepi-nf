@@ -17,10 +17,11 @@ BASE_URL = "https://lapis.pathoplexus.org"
 COUNTRY_MAP = {
     "drc": "Democratic Republic of the Congo",
     "kenya": "Kenya",
+    "nigeria": "Nigeria",
     "uganda": "Uganda",
 }
 
-OUTBREAK_COUNTRIES = ["drc", "kenya", "uganda"]
+OUTBREAK_COUNTRIES = ["drc", "kenya", "nigeria", "uganda"]
 
 METADATA_FIELDS = [
     "accessionVersion", "outbreak", "sampleCollectionDate",
@@ -111,6 +112,10 @@ def main():
         help="Filter to this submitting group (only applied for single-country DRC scope)"
     )
     parser.add_argument(
+        "--min-date", default="2025-01-01",
+        help="Earliest collection date to include (default: 2025-01-01)"
+    )
+    parser.add_argument(
         "--metadata-only", action="store_true",
         help="Download only metadata, skip sequences"
     )
@@ -136,7 +141,8 @@ def main():
     for country_key in countries:
         country_name = COUNTRY_MAP[country_key]
         print(f"\n--- {country_name} ---")
-        filters = {"geoLocCountry": country_name}
+        filters = {"geoLocCountry": country_name,
+                   "sampleCollectionDateRangeLowerFrom": args.min_date}
         if countries == ["drc"] and args.group:
             filters["groupName"] = args.group
 

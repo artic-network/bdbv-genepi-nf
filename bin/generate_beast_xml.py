@@ -140,6 +140,9 @@ def generate_xml(template_path, headers, seqs, skygrid_params,
     text = re.sub(
         r'(<fixedHeightSubtreePruneRegraft\s+weight=")\S+(")',
         rf'\g<1>{round(n / 10, 1)}\2', text)
+    text = re.sub(
+        r'(<mutationHistoryGibbsOperator\s+weight=")\S+(")',
+        rf'\g<1>{round(n / 10, 1)}\2', text)
 
     text = re.sub(
         r'(<mcmc\s+id="mcmc"\s+chainLength=")\d+(")',
@@ -183,6 +186,8 @@ def main():
                         help='SkyGrid template XML')
     parser.add_argument('--template-lgc', default=None,
                         help='LGC (logistic growth coalescent) template XML')
+    parser.add_argument('--template-mat', default=None,
+                        help='MAT (mutation-annotated tree) SkyGrid template XML')
     parser.add_argument('--anchor-date', default=None,
                         help='SkyGrid anchor date (YYYY-MM-DD). Required for SkyGrid templates.')
     parser.add_argument('--chain-length', type=int, default=500_000_000,
@@ -191,11 +196,11 @@ def main():
                         help='Log sampling interval (default: 50000)')
     args = parser.parse_args()
 
-    if args.template_sg and not args.anchor_date:
-        print("ERROR: --anchor-date is required when using --template-sg", file=sys.stderr)
+    if (args.template_sg or args.template_mat) and not args.anchor_date:
+        print("ERROR: --anchor-date is required when using --template-sg or --template-mat", file=sys.stderr)
         sys.exit(1)
 
-    if not args.template_egc and not args.template_sg and not args.template_lgc:
+    if not args.template_egc and not args.template_sg and not args.template_lgc and not args.template_mat:
         print("ERROR: provide at least one of --template-egc, --template-sg, or --template-lgc", file=sys.stderr)
         sys.exit(1)
 
@@ -223,6 +228,13 @@ def main():
         out_path = args.outdir / f"{args.prefix}.GTR_LGC.xml"
         generate_xml(Path(args.template_lgc), headers, seqs,
                      None, args.prefix, args.chain_length, args.log_every, out_path)
+
+    if args.template_mat:
+        print(f"\nGenerating MAT SkyGrid XML from {args.template_mat}")
+        sg_params = compute_skygrid_params(headers, args.anchor_date)
+        out_path = args.outdir / f"{args.prefix}.GTR_SG.mat.xml"
+        generate_xml(Path(args.template_mat), headers, seqs,
+                     sg_params, args.prefix, args.chain_length, args.log_every, out_path)
 
     print("\nDone.")
 

@@ -33,8 +33,10 @@ class RunLog:
         self._write(f'Scope:   {args.scope}')
         self._write(f'Prefix:  {args.prefix}')
         self._write(f'Previous: {args.previous_data or "(none)"}')
-        if args.trim_end:
-            self._write(f'Trim:    1–{args.trim_end}')
+        if args.trim_start or args.trim_end:
+            t_start = args.trim_start or 1
+            t_end = args.trim_end or 'end'
+            self._write(f'Trim:    {t_start}–{t_end}')
         if hasattr(args, 'model') and args.model:
             self._write(f'Model:   {args.model}')
         if args.min_date:
@@ -183,6 +185,7 @@ def main():
 
     # Pipeline options
     parser.add_argument('--adar-mode', default='mask', choices=['mask', 'exclude_tc', 'exclude_all'])
+    parser.add_argument('--trim-start', type=int, default=None, help='First alignment position to keep (1-based, inclusive)')
     parser.add_argument('--trim-end', type=int, default=None, help='Last alignment position to keep (1-based, inclusive)')
     parser.add_argument('--outlier-threshold', type=float, default=3.0, help='Auto-remove outliers at this z-score (default: 3.0)')
     parser.add_argument('--model', default=None, help='Substitution model for IQ-TREE (e.g. GTR+F+R3). Default: ModelFinder')
@@ -383,6 +386,8 @@ def main():
             f' --outlier-removal-threshold {args.outlier_threshold}'
             f' --exclude-file {merged_exclude}'
         )
+        if args.trim_start is not None:
+            cmd += f' --trim-start {args.trim_start}'
         if args.trim_end is not None:
             cmd += f' --trim-end {args.trim_end}'
         if args.model is not None:

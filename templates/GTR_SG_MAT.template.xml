@@ -197,11 +197,11 @@
 		</upDownOperator>
 		<subtreeLeap size="1.0" weight="120">
 			<treeModel idref="treeModel"/>
-			<mutationHistoryResampler idref="matResampler"/>
+			<!-- <mutationHistoryResampler idref="matResampler"/>  -->
 		</subtreeLeap>
 		<fixedHeightSubtreePruneRegraft weight="12.0">
 			<treeModel idref="treeModel"/>
-			<mutationHistoryResampler idref="matResampler"/>
+			<!-- <mutationHistoryResampler idref="matResampler"/>  -->
 		</fixedHeightSubtreePruneRegraft>
 		<mutationHistoryGibbsOperator weight="12.0" size="3">
 			<mutationHistoryResampler idref="matResampler"/>

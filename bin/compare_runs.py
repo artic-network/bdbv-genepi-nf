@@ -22,7 +22,7 @@ import pandas as pd
 
 
 def count_sequences(path):
-    if not Path(path).exists():
+    if not path or not Path(path).exists():
         return None
     n = 0
     with open(path) as f:
@@ -33,7 +33,7 @@ def count_sequences(path):
 
 
 def get_accessions(path):
-    if not Path(path).exists():
+    if not path or not Path(path).exists():
         return set()
     accs = set()
     with open(path) as f:
@@ -46,7 +46,7 @@ def get_accessions(path):
 
 def read_exclude(path):
     entries = set()
-    if not Path(path).exists():
+    if not path or not Path(path).exists():
         return entries
     with open(path) as f:
         for line in f:
@@ -57,7 +57,7 @@ def read_exclude(path):
 
 
 def parse_rtt_summary(path):
-    if not Path(path).exists():
+    if not path or not Path(path).exists():
         return {}
     vals = {}
     with open(path) as f:
@@ -80,7 +80,7 @@ def parse_rtt_summary(path):
 
 
 def parse_adar_summary(path):
-    if not Path(path).exists():
+    if not path or not Path(path).exists():
         return {}
     vals = {}
     with open(path) as f:

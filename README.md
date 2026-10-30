@@ -9,8 +9,13 @@ Automated pipeline for downloading, cleaning, and building maximum-likelihood ph
 Create the conda environment:
 
 ```bash
-conda env create -f environment.yml
-conda activate bdbv-pipeline
+mamba env create -f environment.yml
+```
+
+All pipeline commands should be run with `mamba run -n bdbv` (or `conda run -n bdbv`):
+
+```bash
+mamba run -n bdbv python bin/run.py ...
 ```
 
 [IQ-TREE 2/3](http://www.iqtree.org/) must be installed separately and available on `PATH` as `iqtree3`.
@@ -30,24 +35,39 @@ Per-run auto-generated files (not checked into the repo):
 
 ### `run.py` — single entry point
 
+Minimal (DRC consortium only, no comparison):
+
 ```bash
-python bin/run.py \
+mamba run -n bdbv python bin/run.py \
     --outdir data/20261029 \
-    --prefix Ituri2026.DRC_trimmed \
+    --prefix BDBV2026.drc \
     --scope drc \
-    --trim-end 18890
+    --trim-start 47 --trim-end 18851 \
+    --seed 42
 ```
 
-With a linelist and previous run (enables quality report, health checks, and run comparison):
+Multi-country outbreak scope:
 
 ```bash
-python bin/run.py \
+mamba run -n bdbv python bin/run.py \
+    --outdir data/20261029 \
+    --prefix BDBV2026.outbreak \
+    --scope outbreak \
+    --trim-start 47 --trim-end 18851 \
+    --seed 42
+```
+
+Full run with linelist, previous data, and BEAST XMLs:
+
+```bash
+mamba run -n bdbv python bin/run.py \
     --previous-data data/20261027 \
     --outdir data/20261029 \
-    --prefix Ituri2026.DRC_trimmed \
+    --prefix BDBV2026.drc \
     --scope drc \
     --model GTR+F+R3 \
-    --trim-end 18890 \
+    --trim-start 47 --trim-end 18851 \
+    --seed 42 \
     --linelist data/CONFIDENTIAL-linelist.xlsx \
     --aliases-file data/aliases.csv \
     --hz-lookup data/health_area_zone_province_slim.csv \
@@ -71,17 +91,24 @@ python bin/run.py \
 | `--previous-data` | Previous pipeline output directory (enables comparison and health checks) |
 | `--outdir` | Output directory (default: `data/YYYYMMDD`) |
 | `--prefix` | Output file prefix |
-| `--scope` | `drc` (consortium only) or `outbreak` (all groups, all outbreak countries) |
+| `--scope` | `drc` (consortium only), `outbreak` (all groups, all outbreak countries), or comma-separated country list |
 | `--model` | IQ-TREE substitution model (e.g. `GTR+F+R3`; default: ModelFinder) |
-| `--trim-end` | Last alignment position to keep, 1-based inclusive (e.g. `18890`) |
+| `--trim-start` | First alignment position to keep, 1-based inclusive (e.g. `47`) |
+| `--trim-end` | Last alignment position to keep, 1-based inclusive (e.g. `18851`) |
+| `--outlier-threshold` | Auto-remove outliers with \|z\| ≥ this value (default: `3.0`) |
+| `--seed` | IQ-TREE random seed (default: `42`) |
 | `--linelist` | INRB linelist Excel file (enables duplicate resolution and mismatch checking) |
 | `--exclude` | Manual exclude list (default: `data/exclude.txt`) |
+| `--min-date` | Earliest collection date to download (default: `2025-01-01`) |
+| `--adar-mode` | `mask` (default), `exclude_tc`, or `exclude_all` |
 | `--skip-download` | Use existing files in `--outdir` |
 | `--skip-pipeline` | Skip pipeline step |
 | `--skip-beast-xmls` | Skip BEAST XML generation |
+| `--full-check` | Run health checks on all genomes, not just new ones |
 | `--template-sg` | SkyGrid template XML |
 | `--template-egc` | EGC template XML |
 | `--anchor-date` | SkyGrid anchor date (default: `2025-11-08`) |
+| `--slack-webhook` | Slack webhook URL for notifications |
 
 ### Inputs and outputs
 
@@ -153,7 +180,7 @@ Non-consortium sequences (any group other than `Pathogen Genomic Lab`) are separ
 ### Download
 
 ```bash
-python bin/download_pathoplexus.py --scope outbreak -o data/YYYYMMDD
+mamba run -n bdbv python bin/download_pathoplexus.py --scope outbreak -o data/YYYYMMDD
 ```
 
 `--scope` options:
@@ -167,18 +194,32 @@ Defaults to `--min-date 2025-01-01` to exclude historical sequences.
 `run_pipeline.py` is the inner engine called by `run.py`. Use it directly only when you need fine-grained step control:
 
 ```bash
-python bin/run_pipeline.py \
+mamba run -n bdbv python bin/run_pipeline.py \
     -f data/YYYYMMDD/aligned.fasta \
     -m data/YYYYMMDD/metadata.tsv \
     -p prefix \
     -d data/YYYYMMDD \
     --exclude-file data/YYYYMMDD/exclude_merged.txt \
     --adar-mode mask \
-    --trim-end 18890 \
+    --trim-start 47 --trim-end 18851 \
+    --seed 42 \
     --outlier-removal-threshold 3
 ```
 
-Omit `--outlier-removal-threshold` for manual outlier review. The pipeline stops after temporal rooting; review `outliers.txt`, then resume with `--skip-to filter_outliers`.
+Omit `--outlier-removal-threshold` for manual outlier review. The pipeline stops after temporal rooting; review `outliers.txt`, then resume:
+
+```bash
+mamba run -n bdbv python bin/run_pipeline.py \
+    -f data/YYYYMMDD/aligned.fasta \
+    -m data/YYYYMMDD/metadata.tsv \
+    -p prefix \
+    -d data/YYYYMMDD \
+    --adar-mode mask \
+    --trim-start 47 --trim-end 18851 \
+    --seed 42 \
+    --outlier-removal-threshold 3 \
+    --skip-to filter_outliers
+```
 
 #### Pipeline steps
 
@@ -199,7 +240,8 @@ Omit `--outlier-removal-threshold` for manual outlier review. The pipeline stops
 | Flag | Description |
 |------|-------------|
 | `--outlier-removal-threshold N` | Auto-remove outliers with \|z\| ≥ N (e.g. `3`) |
-| `--trim-end N` | Last alignment position to keep, 1-based inclusive |
+| `--trim-start N` | First alignment position to keep, 1-based inclusive (e.g. `47`) |
+| `--trim-end N` | Last alignment position to keep, 1-based inclusive (e.g. `18851`) |
 | `--adar-mode` | `mask` (default), `exclude_tc`, or `exclude_all` |
 | `--skip-to STEP` | Resume from a specific step |
 | `--stop-after STEP` | Stop after a specific step |
@@ -208,7 +250,7 @@ Omit `--outlier-removal-threshold` for manual outlier review. The pipeline stops
 ### BEAST XMLs
 
 ```bash
-python bin/generate_beast_xml.py \
+mamba run -n bdbv python bin/generate_beast_xml.py \
     -a data/YYYYMMDD/prefix.ADAR_masked.final.aln \
     -o data/YYYYMMDD \
     -p prefix.nNNN \
@@ -222,7 +264,7 @@ Templates are in `templates/` with placeholder taxa. The script swaps in the rea
 ### Health checks
 
 ```bash
-python bin/health_checks.py --current data/20261029 --previous data/20261012 --prefix Ituri2026.DRC_trimmed
+mamba run -n bdbv python bin/health_checks.py --current data/20261029 --previous data/20261012 --prefix Ituri2026.DRC_trimmed
 ```
 
 Per-sequence flags (new genomes by default, `--full` for all): `high_adar`, `high_Ns`, `low_coverage`, `near_outlier`, `many_gaps`, `long_branch`, `duplicate_sample`, `phylo_conflict`.
@@ -232,7 +274,7 @@ Dataset-level checks: outlier count, clock rate shift, R², ADAR branch count, g
 ### Run comparison
 
 ```bash
-python bin/compare_runs.py --current data/20261029 --previous data/20261012 --prefix Ituri2026.DRC_trimmed
+mamba run -n bdbv python bin/compare_runs.py --current data/20261029 --previous data/20261012 --prefix Ituri2026.DRC_trimmed
 ```
 
 Side-by-side diff of two pipeline runs: sequence counts, added/removed accessions, exclude list changes, clock rate, ADAR summary, metadata differences.

@@ -261,6 +261,10 @@ mamba run -n bdbv python bin/generate_beast_xml.py \
 
 Templates are in `templates/` with placeholder taxa. The script swaps in the real alignment, updates SkyGrid parameters (weekly grid intervals from anchor date to latest sample), and adjusts operator weights for dataset size.
 
+Two SkyGrid templates are available:
+- **`GTR_SG.template.xml`** — Standard SkyGrid. Works with any BEAST X version.
+- **`GTR_SG_MAT.template.xml`** — SkyGrid using mutation-annotated trees. Requires a MAT-specific release of BEAST X.
+
 ### Health checks
 
 ```bash

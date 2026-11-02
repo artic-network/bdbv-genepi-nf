@@ -411,12 +411,17 @@ def main():
                         n_sites = int(m.group(1))
             rlog.log(f'ADAR: {n_branches} branches, {n_sites} sites masked (see {adar_report.name})')
 
-        # Log outliers
-        outlier_file = outdir / f'{args.prefix}.{adar_tag}.final.outliers.txt'
+        # Log outliers (read from outliers.txt which has the threshold-filtered set)
+        outlier_file = outdir / 'outliers.txt'
+        detected_file = outdir / f'{args.prefix}.{adar_tag}.outliers.txt'
         if outlier_file.exists():
             outliers = [l.strip() for l in outlier_file.read_text().splitlines()
                         if l.strip() and not l.startswith('#')]
-            rlog.log(f'Outliers removed: {len(outliers)}')
+            n_detected = 0
+            if detected_file.exists():
+                n_detected = sum(1 for l in detected_file.read_text().splitlines()
+                                 if l.strip() and not l.startswith('#'))
+            rlog.log(f'Outliers removed: {len(outliers)} (|z| >= {args.outlier_threshold}, from {n_detected} detected at |z| >= 2)')
             for o in outliers:
                 rlog.log(f'  {o}')
 

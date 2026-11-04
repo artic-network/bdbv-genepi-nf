@@ -52,13 +52,30 @@ parser = argparse.ArgumentParser(description="Clean up Pathoplexus data")
 parser.add_argument("-f", "--fasta", type=str, required=True, help="Path to the Pathoplexus fasta file.")
 parser.add_argument("-m", "--metadata", type=str, required=True, help="Path to the Pathoplexus metadata file.")
 parser.add_argument("-a", "--aliases_file", type=str, required=False, default="data/aliases.csv", help="Path to the aliases file containing mappings for DRC provinces and health zones.")
-parser.add_argument("-ts", "--trim_start", type=int, required=False, help="First position to keep (1-based, inclusive).")
-parser.add_argument("-te", "--trim_end", type=int, required=False, help="Last position to keep (1-based, inclusive).")
+parser.add_argument("-ts", "--trim_start", type=int, required=False, help="First position to keep (1-based, inclusive). Positions before this are masked to N.")
+parser.add_argument("-te", "--trim_end", type=int, required=False, help="Last position to keep (1-based, inclusive). Positions after this are masked to N.")
+parser.add_argument("--mask_sites", type=str, required=False, help="Comma-separated 1-based positions to mask to N (e.g. 5246,5249,5251).")
+parser.add_argument("--mask_sites_file", type=str, required=False, help="File with 1-based positions to mask, one per line (# comments allowed).")
 parser.add_argument("-e", "--exclude-files", type=str, nargs='*', default=[], help="One or more text files with accession IDs to exclude (one per line, # comments allowed).")
 parser.add_argument("-p", "--prefix", type=str, required=True, help="Prefix for the output file.")
 parser.add_argument("--min-date", type=str, default=None, help="Remove sequences with date before this (YYYY-MM-DD). Sequences in the same year are flagged with a warning.")
 
 args = parser.parse_args()
+
+# Parse mask sites (1-based → 0-based indices)
+mask_positions = set()
+if args.mask_sites:
+    for s in args.mask_sites.split(','):
+        mask_positions.add(int(s.strip()) - 1)
+if args.mask_sites_file:
+    with open(args.mask_sites_file) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            mask_positions.add(int(line.split()[0]) - 1)
+if mask_positions:
+    print(f"Masking {len(mask_positions)} sites to N: {','.join(str(p+1) for p in sorted(mask_positions))}")
 
 # Read inputs
 fasta = readFASTA(args.fasta)
@@ -154,8 +171,12 @@ for acc_id, seq in fasta.items():
     if args.trim_end is not None:
         end = args.trim_end
     if start > 1 or end < len(seq):
-        seq = seq[start - 1:end]
-        
+        seq = 'N' * (start - 1) + seq[start - 1:end] + 'N' * (len(seq) - end)
+
+    for idx in mask_positions:
+        if idx < len(seq):
+            seq = seq[:idx] + 'N' + seq[idx+1:]
+
     # replace gaps with N's
     seq = seq.replace('-', 'N')
     

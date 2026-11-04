@@ -39,10 +39,12 @@ Minimal (DRC consortium only, no comparison):
 
 ```bash
 mamba run -n bdbv python bin/run.py \
-    --outdir data/20261029 \
+    --outdir data/20261104_drc \
     --prefix BDBV2026.drc \
     --scope drc \
+    --model GTR+F+R3 \
     --trim-start 47 --trim-end 18851 \
+    --mask-sites-file data/mask_sites.txt \
     --seed 42
 ```
 
@@ -50,10 +52,12 @@ Multi-country outbreak scope:
 
 ```bash
 mamba run -n bdbv python bin/run.py \
-    --outdir data/20261029 \
+    --outdir data/20261104_outbreak \
     --prefix BDBV2026.outbreak \
     --scope outbreak \
+    --model GTR+F+R3 \
     --trim-start 47 --trim-end 18851 \
+    --mask-sites-file data/mask_sites.txt \
     --seed 42
 ```
 
@@ -61,12 +65,13 @@ Full run with linelist, previous data, and BEAST XMLs:
 
 ```bash
 mamba run -n bdbv python bin/run.py \
-    --previous-data data/20261027 \
-    --outdir data/20261029 \
+    --previous-data data/20261027_drc \
+    --outdir data/20261104_drc \
     --prefix BDBV2026.drc \
     --scope drc \
     --model GTR+F+R3 \
     --trim-start 47 --trim-end 18851 \
+    --mask-sites-file data/mask_sites.txt \
     --seed 42 \
     --linelist data/CONFIDENTIAL-linelist.xlsx \
     --aliases-file data/aliases.csv \
@@ -95,6 +100,8 @@ mamba run -n bdbv python bin/run.py \
 | `--model` | IQ-TREE substitution model (e.g. `GTR+F+R3`; default: ModelFinder) |
 | `--trim-start` | First alignment position to keep, 1-based inclusive (e.g. `47`) |
 | `--trim-end` | Last alignment position to keep, 1-based inclusive (e.g. `18851`) |
+| `--mask-sites` | Comma-separated 1-based positions to mask to N (e.g. `5246,5249,5251,5252,5255`) |
+| `--mask-sites-file` | File with 1-based positions to mask, one per line (`#` comments allowed) |
 | `--outlier-threshold` | Auto-remove outliers with \|z\| ≥ this value (default: `3.0`) |
 | `--seed` | IQ-TREE random seed (default: `42`) |
 | `--linelist` | INRB linelist Excel file (enables duplicate resolution and mismatch checking) |
@@ -224,7 +231,7 @@ mamba run -n bdbv python bin/run_pipeline.py \
 #### Pipeline steps
 
 1. **mafft** *(optional)* — MAFFT alignment
-2. **clean** — Rename headers, trim, deduplicate versions
+2. **clean** — Rename headers, trim, mask sites, deduplicate versions
 3. **qc_basic** — Genome-level QC report
 4. **pre_filter** — Remove excluded sequences
 5. **iqtree1** — ML tree + ModelFinder + ancestral reconstruction
@@ -242,10 +249,23 @@ mamba run -n bdbv python bin/run_pipeline.py \
 | `--outlier-removal-threshold N` | Auto-remove outliers with \|z\| ≥ N (e.g. `3`) |
 | `--trim-start N` | First alignment position to keep, 1-based inclusive (e.g. `47`) |
 | `--trim-end N` | Last alignment position to keep, 1-based inclusive (e.g. `18851`) |
+| `--mask-sites` | Comma-separated 1-based positions to mask to N (e.g. `5246,5249,5251,5252,5255`) |
+| `--mask-sites-file` | File with 1-based positions to mask, one per line (`#` comments allowed) |
 | `--adar-mode` | `mask` (default), `exclude_tc`, or `exclude_all` |
 | `--skip-to STEP` | Resume from a specific step |
 | `--stop-after STEP` | Stop after a specific step |
 | `--seed N` | IQ-TREE random seed (default: 42) |
+
+**Mask sites file format** (one 1-based position per line):
+
+```
+# Primer-trimming artifact at VP40 amplicon 13/14 junction
+5246
+5249
+5251
+5252
+5255
+```
 
 ### BEAST XMLs
 

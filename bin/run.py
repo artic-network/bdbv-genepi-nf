@@ -41,6 +41,10 @@ class RunLog:
             self._write(f'Model:   {args.model}')
         if args.min_date:
             self._write(f'Min date: {args.min_date}')
+        if hasattr(args, 'mask_sites') and args.mask_sites:
+            self._write(f'Mask sites: {args.mask_sites}')
+        if hasattr(args, 'mask_sites_file') and args.mask_sites_file:
+            self._write(f'Mask sites file: {args.mask_sites_file}')
         self._write('')
 
     def step(self, title):
@@ -187,6 +191,10 @@ def main():
     parser.add_argument('--adar-mode', default='mask', choices=['mask', 'exclude_tc', 'exclude_all'])
     parser.add_argument('--trim-start', type=int, default=None, help='First alignment position to keep (1-based, inclusive)')
     parser.add_argument('--trim-end', type=int, default=None, help='Last alignment position to keep (1-based, inclusive)')
+    parser.add_argument('--mask-sites', type=str, default=None,
+                        help='Comma-separated 1-based positions to mask to N (e.g. 5246,5249,5251)')
+    parser.add_argument('--mask-sites-file', type=str, default=None,
+                        help='File with 1-based positions to mask, one per line (# comments allowed)')
     parser.add_argument('--outlier-threshold', type=float, default=3.0, help='Auto-remove outliers at this z-score (default: 3.0)')
     parser.add_argument('--model', default=None, help='Substitution model for IQ-TREE (e.g. GTR+F+R3). Default: ModelFinder')
     parser.add_argument('--seed', type=int, default=42)
@@ -392,6 +400,10 @@ def main():
             cmd += f' --trim-end {args.trim_end}'
         if args.model is not None:
             cmd += f' --model {args.model}'
+        if args.mask_sites is not None:
+            cmd += f' --mask-sites {args.mask_sites}'
+        if args.mask_sites_file is not None:
+            cmd += f' --mask-sites-file {args.mask_sites_file}'
         run_streaming(cmd, rlog, 'Running pipeline (clean → final)')
 
         adar_tag = 'ADAR_masked' if args.adar_mode == 'mask' else 'ADAR_excluded'

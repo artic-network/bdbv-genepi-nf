@@ -1,0 +1,8 @@
+# Primer-trimming artifact at VP40 amplicon 13/14 junction
+# Oct 16+ batch assembled with wrong BED file — untrimmed primer bases
+# cause systematic miscalls. See docs/site_5246_primer_artifact.md
+5246
+5249
+5251
+5252
+5255

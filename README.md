@@ -495,6 +495,56 @@ Reports: sequence counts, added/removed accessions, exclude list changes, clock 
 
 **When to use standalone:** Comparing any two runs after the fact, without rerunning the pipeline.
 
+## Pipeline DAG (for Nextflow conversion)
+
+Each row shows a pipeline step, the script it runs, its required inputs, its outputs, and external tool dependencies. File patterns use `{p}` for prefix and `{d}` for output directory.
+
+| Step | Script | Inputs | Outputs | External tools |
+|------|--------|--------|---------|----------------|
+| download | `download_pathoplexus.py` | Pathoplexus API | `{d}/ebola-bdbv_aligned-nuc_*.fasta`, `{d}/ebola-bdbv_metadata_*.tsv` | — |
+| metadata_qc | `metadata_quality_report.py` | `metadata.tsv`, `aligned.fasta`, `aliases.csv`, `linelist.xlsx` (optional) | `{d}/metadata_quality_report.csv`, `{d}/metadata_quality_report.txt`, `{d}/exclude_auto.txt`, `{d}/non_consortium_sequences.csv` | — |
+| merge_excludes | (inline in `run.py`) | `exclude.txt`, `{d}/exclude_auto.txt` | `{d}/exclude_merged.txt` | — |
+| mafft *(optional)* | `mafft` | `aligned.fasta` | `{d}/{p}.mafft.fasta` | `mafft` |
+| clean | `clean_up_pathoplexus.py` | `aligned.fasta`, `metadata.tsv`, `aliases.csv`, `mask_sites.txt` (optional) | `{d}/{p}.cleaned.aln` | — |
+| qc_basic | `genome_qc_report.py` | `{d}/{p}.cleaned.aln`, `metadata.tsv` | `{d}/qc_report_basic.txt` | — |
+| pre_filter | (inline in `run_pipeline.py`) | `{d}/{p}.cleaned.aln`, `{d}/exclude_merged.txt`, exclude_quality (optional) | `{d}/{p}.aln` | — |
+| iqtree1 | `iqtree3` | `{d}/{p}.aln` | `{d}/{p}.aln.treefile`, `{d}/{p}.aln.state`, `{d}/{p}.aln.iqtree`, `{d}/best_model.txt` | `iqtree3` |
+| raccoon | `raccoon` | `{d}/{p}.aln.treefile`, `{d}/{p}.aln`, `{d}/{p}.aln.state` | `{d}/{p}.aln.phylo_flags.csv`, `{d}/{p}.aln.branch_snps.reconstruction.csv` | `raccoon` |
+| adar_mask | `mask_adar_sites.py` | `{d}/{p}.aln`, `phylo_flags.csv`, `.treefile`, `.state` | `{d}/{p}.ADAR_masked.aln`, `{d}/{p}.ADAR_masked.adar_report.txt` | — |
+| qc_phylo | `phylo_qc_report.py` | `phylo_flags.csv`, `branch_snps.reconstruction.csv`, `metadata.tsv`, `qc_report_basic.txt` | `{d}/qc_report_phylo.txt` | — |
+| iqtree2 | `iqtree3` | `{d}/{p}.ADAR_masked.aln`, `best_model.txt` | `{d}/{p}.ADAR_masked.aln.treefile` | `iqtree3` |
+| temporal_root | `temporal_root.py` | `{d}/{p}.ADAR_masked.aln.treefile` | `{d}/{p}.ADAR_masked.bestFitRoot.tree`, `{d}/{p}.ADAR_masked.outliers.txt`, `{d}/{p}.ADAR_masked.rtt_plot.pdf`, `{d}/{p}.ADAR_masked.rtt_summary.txt` | — |
+| filter_outliers | (inline in `run_pipeline.py`) | `{d}/{p}.ADAR_masked.aln`, `{d}/outliers.txt` | `{d}/{p}.ADAR_masked.final.aln` | — |
+| iqtree3 | `iqtree3` | `{d}/{p}.ADAR_masked.final.aln`, `best_model.txt` | `{d}/{p}.ADAR_masked.final.aln.treefile` | `iqtree3` |
+| final_root | `temporal_root.py` | `{d}/{p}.ADAR_masked.final.aln.treefile` | `{d}/{p}.ADAR_masked.final.bestFitRoot.tree`, `{d}/{p}.ADAR_masked.final.rtt_plot.pdf`, `{d}/{p}.ADAR_masked.final.rtt_summary.txt` | — |
+| health_checks | `health_checks.py` | `{d}/` (current run dir), previous run dir (optional) | `{d}/health_check_report.txt` | — |
+| compare_runs | `compare_runs.py` | `{d}/` (current), previous run dir | `{d}/run_comparison.txt` | — |
+| beast_xmls | `generate_beast_xml.py` | `{d}/{p}.ADAR_masked.final.aln`, template XMLs | `{d}/*.xml` | — |
+
+**Step dependency chain:**
+
+```
+download → metadata_qc → merge_excludes
+                                ↓
+         mafft (optional) → clean → qc_basic
+                                ↓
+                          pre_filter → iqtree1 → raccoon → adar_mask → qc_phylo
+                                                              ↓
+                                                          iqtree2 → temporal_root → filter_outliers → iqtree3 → final_root
+                                                                                                                     ↓
+                                                                                                              beast_xmls
+                                                                                                              health_checks
+                                                                                                              compare_runs
+```
+
+**Notes for Nextflow:**
+- All Python scripts exit with code 1 on failure.
+- `iqtree3` must be on `PATH`. Three IQ-TREE calls: `iqtree1` uses `--ancestral` + either `MFP` or a fixed model; `iqtree2` uses the saved model; `iqtree3` adds `-abayes`.
+- `raccoon` must be on `PATH` (installed via pip in the conda env).
+- `qc_basic` and `qc_phylo` are reporting-only steps with no downstream dependencies — they can run in parallel with the main chain.
+- `health_checks`, `compare_runs`, and `beast_xmls` are independent of each other and can run in parallel after `final_root`.
+- The `pre_filter` and `filter_outliers` steps are inline functions in `run_pipeline.py`, not separate scripts — they'll need to be extracted or reimplemented for Nextflow.
+
 ## Environment notes
 
 - **raccoon** requires `baltic<1` (pinned in `environment.yml`)

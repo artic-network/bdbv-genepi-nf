@@ -26,6 +26,7 @@ mamba run -n bdbv python bin/run.py ...
 - **`data/exclude.txt`** — Manual exclusions (accessions to always exclude from analysis).
 - **`data/exclusion_log.tsv`** — Audit trail documenting exclude list changes.
 - **`data/health_area_zone_province_slim.csv`** — Health area → zone → province lookup for location validation.
+- **`data/mask_sites.txt`** — Alignment positions to mask to N before phylogenetic analysis. Currently contains 5 sites (5246, 5249, 5251, 5252, 5255) in the VP40 gene at the amplicon 13/14 junction. These are primer-trimming artifacts from an Oct 2026 sequencing batch that was assembled with an incorrect BED file, causing untrimmed primer bases to be incorporated into consensus sequences as systematic miscalls. Site 5246 is the most homoplasic site in the genome (60 inferred mutation events on the tree, 3.5× more than any other site). See `docs/site_5246_primer_artifact.md` in the main project repo for the full diagnostic report.
 
 Per-run auto-generated files (not checked into the repo):
 - **`exclude_auto.txt`** — Resolved duplicates, unresolved duplicates (temporarily excluded), and quality failures.

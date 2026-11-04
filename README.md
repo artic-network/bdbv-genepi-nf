@@ -543,7 +543,8 @@ download → metadata_qc → merge_excludes
 - `raccoon` must be on `PATH` (installed via pip in the conda env).
 - `qc_basic` and `qc_phylo` are reporting-only steps with no downstream dependencies — they can run in parallel with the main chain.
 - `health_checks`, `compare_runs`, and `beast_xmls` are independent of each other and can run in parallel after `final_root`.
-- The `pre_filter` and `filter_outliers` steps are inline functions in `run_pipeline.py`, not separate scripts — they'll need to be extracted or reimplemented for Nextflow.
+- `merge_excludes` is an inline function in `run.py` — it deduplicates and concatenates text files. Will need to be extracted or reimplemented for Nextflow.
+- `pre_filter` and `filter_outliers` are inline functions in `run_pipeline.py` — they filter a FASTA by accession IDs in exclude files. Will need to be extracted or reimplemented for Nextflow.
 
 ## Environment notes
 

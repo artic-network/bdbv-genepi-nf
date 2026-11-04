@@ -185,48 +185,188 @@ Non-consortium sequences (any group other than `Pathogen Genomic Lab`) are separ
 
 ## Individual scripts
 
-### Download
+Most users should use `run.py` (see above), which calls these scripts in order. Use individual scripts when you need to rerun a single step, debug, or work outside the standard workflow.
+
+All commands should be prefixed with `mamba run --live-stream -n bdbv`.
+
+### `download_pathoplexus.py` — Download sequences
+
+Fetches aligned sequences and metadata from the Pathoplexus LAPIS API.
 
 ```bash
-mamba run -n bdbv python bin/download_pathoplexus.py --scope outbreak -o data/YYYYMMDD
+python bin/download_pathoplexus.py --scope drc -o /path/to/output/dir
 ```
 
-`--scope` options:
-- `drc` — DRC consortium sequences only (`Pathogen Genomic Lab` group filter)
-- `outbreak` — All groups, all outbreak countries (DRC, Kenya, Nigeria, Uganda)
+| Flag | Description |
+|------|-------------|
+| `--scope` | `drc` (consortium only, filters to `Pathogen Genomic Lab` group), `outbreak` (all groups, all outbreak countries: DRC, Kenya, Nigeria, Uganda), or comma-separated country list |
+| `-o` | Output directory |
+| `--min-date` | Earliest collection date (default: `2025-01-01`) |
+| `--organism` | Pathoplexus organism slug (default: `ebola-bdbv`) |
 
-Defaults to `--min-date 2025-01-01` to exclude historical sequences.
+**When to use standalone:** Testing download without running the full pipeline, or downloading for a custom scope.
 
-### Pipeline (advanced)
+### `metadata_quality_report.py` — Metadata quality report
 
-`run_pipeline.py` is the inner engine called by `run.py`. Use it directly only when you need fine-grained step control:
+Validates sequences against the INRB linelist. Detects duplicates, linelist mismatches, location issues, date issues, and low-quality sequences. Outputs an actionable report for the team and auto-generates an exclude list.
 
 ```bash
-mamba run -n bdbv python bin/run_pipeline.py \
-    -f data/YYYYMMDD/aligned.fasta \
-    -m data/YYYYMMDD/metadata.tsv \
+python bin/metadata_quality_report.py \
+    -m /path/to/metadata.tsv \
+    -f /path/to/aligned.fasta \
+    -a data/aliases.csv \
+    -l /path/to/linelist.xlsx \
+    -s data/health_area_zone_province_slim.csv \
+    -o /path/to/output/metadata_quality_report.csv \
+    --report-txt /path/to/output/metadata_quality_report.txt \
+    --exclude-out /path/to/output/exclude_auto.txt \
+    --non-consortium-out /path/to/output/non_consortium_sequences.csv
+```
+
+| Flag | Description |
+|------|-------------|
+| `-m` | Pathoplexus metadata TSV (required) |
+| `-f` | FASTA alignment (required, for completeness/quality checks) |
+| `-a` | Aliases CSV (required) |
+| `-l` | INRB linelist Excel (required for duplicate resolution; omit to skip linelist checks) |
+| `-s` | Health area/zone/province CSV (for location validation) |
+| `-o` | Output CSV (one row per issue) |
+| `--report-txt` | Human-readable report |
+| `--exclude-out` | Auto-generated exclude list (duplicates + quality failures) |
+| `--non-consortium-out` | Non-consortium sequences CSV |
+
+**When to use standalone:** Regenerating the quality report after linelist updates without rerunning the pipeline.
+
+### `clean_up_pathoplexus.py` — Clean alignment
+
+Standardizes FASTA headers, masks terminal positions and specific sites to N, deduplicates sequence versions, applies exclude lists, and filters by date. This is the first pipeline step that modifies the alignment.
+
+```bash
+python bin/clean_up_pathoplexus.py \
+    -f /path/to/aligned.fasta \
+    -m /path/to/metadata.tsv \
+    -a data/aliases.csv \
+    -p /path/to/output/prefix \
+    --trim_start 47 --trim_end 18851 \
+    --mask_sites_file data/mask_sites.txt \
+    --min-date 2025-01-01
+```
+
+| Flag | Description |
+|------|-------------|
+| `-f` | Input FASTA (required) |
+| `-m` | Pathoplexus metadata TSV (required) |
+| `-p` | Output prefix (required) — produces `{prefix}.aln` |
+| `-a` | Aliases CSV (default: `data/aliases.csv`) |
+| `--trim_start` | First position to keep (1-based); earlier positions masked to N |
+| `--trim_end` | Last position to keep (1-based); later positions masked to N |
+| `--mask_sites` | Comma-separated 1-based positions to mask to N |
+| `--mask_sites_file` | File with positions to mask (one per line, `#` comments allowed) |
+| `-e` | One or more exclude files (accession IDs to remove) |
+| `--min-date` | Remove sequences before this date (YYYY-MM-DD) |
+
+**When to use standalone:** Testing trimming/masking parameters, or cleaning an alignment for use outside the pipeline.
+
+### `genome_qc_report.py` — Basic genome QC
+
+Reports per-sequence quality metrics (completeness, N fraction, gaps) on the cleaned alignment, before tree building.
+
+```bash
+python bin/genome_qc_report.py \
+    -a /path/to/cleaned.aln \
+    -m /path/to/metadata.tsv \
+    -o /path/to/output/qc_report_basic.txt
+```
+
+**When to use standalone:** Quick quality check on an alignment without building a tree.
+
+### `mask_adar_sites.py` — ADAR masking
+
+Uses raccoon output to handle ADAR-edited sites. Three modes: `mask` (replace sites with N), `exclude_tc` (remove genomes with T>C clusters), `exclude_all` (remove genomes with any ADAR-consistent clusters).
+
+```bash
+python bin/mask_adar_sites.py \
+    -a /path/to/alignment.aln \
+    -r /path/to/phylo_flags.csv \
+    -t /path/to/treefile \
+    -s /path/to/statefile \
+    --mode mask \
+    -p /path/to/output/prefix
+```
+
+| Flag | Description |
+|------|-------------|
+| `-a` | Input alignment (required) |
+| `-r` | Raccoon phylo_flags CSV (required) |
+| `-t` | Newick tree file (required) |
+| `-s` | IQ-TREE `.state` file (required) |
+| `--mode` | `mask`, `exclude_tc`, or `exclude_all` (required) |
+| `-p` | Output prefix — produces `{prefix}.aln` and `{prefix}.adar_report.txt` |
+
+In `mask` mode: GP gene sites are masked to N across all genomes (whole-column); non-GP sites are masked per-branch, keeping the lowest T>C site per branch.
+
+**When to use standalone:** Rerunning ADAR handling with a different mode without rebuilding the tree.
+
+### `phylo_qc_report.py` — Phylogenetic QC
+
+Reports per-sequence phylogenetic quality metrics using raccoon output: ADAR editing levels, branch-level SNP patterns, and conflicts between genome QC and tree placement.
+
+```bash
+python bin/phylo_qc_report.py \
+    -f /path/to/phylo_flags.csv \
+    -b /path/to/branch_snps.reconstruction.csv \
+    -m /path/to/metadata.tsv \
+    --basic-qc /path/to/qc_report_basic.txt \
+    -o /path/to/output/qc_report_phylo.txt
+```
+
+**When to use standalone:** Investigating specific sequences flagged by raccoon.
+
+### `temporal_root.py` — Temporal rooting and outlier detection
+
+Finds the best-fitting temporal root (maximizes R² of root-to-tip regression), identifies outliers by residual z-score, and optionally iterates to refine the root after removing outliers.
+
+```bash
+python bin/temporal_root.py \
+    -t /path/to/treefile \
+    --iterate \
+    --plot \
+    -o /path/to/output/ \
+    --prefix my_analysis
+```
+
+| Flag | Description |
+|------|-------------|
+| `-t` | Newick tree file (required) |
+| `--iterate` | Iteratively re-root after removing outliers until stable |
+| `--plot` | Generate RTT plot (PDF) |
+| `-o` | Output directory |
+| `--prefix` | Output file prefix |
+| `-z` | Z-score threshold for outlier detection (default: 2.0) |
+| `-d` | Tip label delimiter (default: `\|`) |
+| `-f` | Date field index in tip labels (default: `-1`, last field) |
+
+Outputs: `{prefix}.bestFitRoot.tree`, `{prefix}.outliers.txt`, `{prefix}.rtt_plot.pdf`, `{prefix}.rtt_summary.txt`.
+
+**When to use standalone:** Rooting a tree built outside the pipeline, or testing different outlier thresholds.
+
+### `run_pipeline.py` — Inner pipeline engine
+
+Runs the 13-step ML tree pipeline. Called by `run.py` but can be used directly for fine-grained step control.
+
+```bash
+python bin/run_pipeline.py \
+    -f /path/to/aligned.fasta \
+    -m /path/to/metadata.tsv \
     -p prefix \
-    -d data/YYYYMMDD \
-    --exclude-file data/YYYYMMDD/exclude_merged.txt \
+    -d /path/to/output/ \
+    --exclude-file /path/to/exclude_merged.txt \
+    --model GTR+F+R3 \
     --adar-mode mask \
     --trim-start 47 --trim-end 18851 \
+    --mask-sites-file data/mask_sites.txt \
     --seed 42 \
     --outlier-removal-threshold 3
-```
-
-Omit `--outlier-removal-threshold` for manual outlier review. The pipeline stops after temporal rooting; review `outliers.txt`, then resume:
-
-```bash
-mamba run -n bdbv python bin/run_pipeline.py \
-    -f data/YYYYMMDD/aligned.fasta \
-    -m data/YYYYMMDD/metadata.tsv \
-    -p prefix \
-    -d data/YYYYMMDD \
-    --adar-mode mask \
-    --trim-start 47 --trim-end 18851 \
-    --seed 42 \
-    --outlier-removal-threshold 3 \
-    --skip-to filter_outliers
 ```
 
 #### Pipeline steps
@@ -252,10 +392,13 @@ mamba run -n bdbv python bin/run_pipeline.py \
 | `--trim-end N` | Last alignment position to keep, 1-based inclusive (e.g. `18851`) |
 | `--mask-sites` | Comma-separated 1-based positions to mask to N (e.g. `5246,5249,5251,5252,5255`) |
 | `--mask-sites-file` | File with 1-based positions to mask, one per line (`#` comments allowed) |
+| `--model` | Substitution model (e.g. `GTR+F+R3`; default: ModelFinder) |
 | `--adar-mode` | `mask` (default), `exclude_tc`, or `exclude_all` |
 | `--skip-to STEP` | Resume from a specific step |
 | `--stop-after STEP` | Stop after a specific step |
 | `--seed N` | IQ-TREE random seed (default: 42) |
+
+Omit `--outlier-removal-threshold` for manual outlier review. The pipeline stops after temporal rooting; review `outliers.txt`, then resume with `--skip-to filter_outliers`.
 
 **Mask sites file format** (one 1-based position per line):
 
@@ -268,41 +411,89 @@ mamba run -n bdbv python bin/run_pipeline.py \
 5255
 ```
 
-### BEAST XMLs
+**When to use standalone:** Resuming from a specific step (`--skip-to`), stopping early (`--stop-after`), or running with manual outlier review (omit `--outlier-removal-threshold`).
+
+### `generate_beast_xml.py` — BEAST XML generation
+
+Generates BEAST XML files from templates. Swaps in the real alignment, updates SkyGrid parameters (weekly grid intervals from anchor date to latest sample), and adjusts operator weights for dataset size.
 
 ```bash
-mamba run -n bdbv python bin/generate_beast_xml.py \
-    -a data/YYYYMMDD/prefix.ADAR_masked.final.aln \
-    -o data/YYYYMMDD \
+python bin/generate_beast_xml.py \
+    -a /path/to/prefix.ADAR_masked.final.aln \
+    -o /path/to/output/ \
     -p prefix.nNNN \
-    --template-sg templates/GTR_SG.template.xml \
-    --template-egc templates/GTR_EGC.template.xml \
+    --template-sg templates/GTR_SG_MAT.template.xml \
     --anchor-date 2025-11-08
 ```
 
-Templates are in `templates/` with placeholder taxa. The script swaps in the real alignment, updates SkyGrid parameters (weekly grid intervals from anchor date to latest sample), and adjusts operator weights for dataset size.
+| Flag | Description |
+|------|-------------|
+| `-a` | Final alignment (required) |
+| `-o` | Output directory |
+| `-p` | Output prefix |
+| `--template-sg` | SkyGrid template XML |
+| `--template-egc` | EGC template XML |
+| `--anchor-date` | SkyGrid anchor date (default: `2025-11-08`) |
+| `--chain-length` | MCMC chain length (default: 100,000,000) |
+| `--log-every` | Log sampling interval (default: 10,000) |
 
 Two SkyGrid templates are available:
 - **`GTR_SG.template.xml`** — Standard SkyGrid. Works with any BEAST X version.
 - **`GTR_SG_MAT.template.xml`** — SkyGrid using mutation-annotated trees. Requires a MAT-specific release of BEAST X.
 
-### Health checks
+**When to use standalone:** Generating XMLs for a different alignment or with different chain settings.
+
+### `health_checks.py` — Health checks
+
+Runs per-sequence flags and dataset-level checks. Most useful when comparing two runs to detect regressions.
 
 ```bash
-mamba run -n bdbv python bin/health_checks.py --current data/20261029 --previous data/20261012 --prefix Ituri2026.DRC_trimmed
+# With comparison to previous run:
+python bin/health_checks.py \
+    --current /path/to/20261104_drc \
+    --previous /path/to/20261103_drc \
+    --prefix BDBV2026.drc \
+    -o /path/to/20261104_drc/health_check_report.txt
+
+# Standalone (no comparison, dataset-level checks only):
+python bin/health_checks.py \
+    --current /path/to/20261104_drc \
+    --prefix BDBV2026.drc \
+    --full
 ```
 
-Per-sequence flags (new genomes by default, `--full` for all): `high_adar`, `high_Ns`, `low_coverage`, `near_outlier`, `many_gaps`, `long_branch`, `duplicate_sample`, `phylo_conflict`.
+| Flag | Description |
+|------|-------------|
+| `--current` | Current pipeline output directory (required) |
+| `--previous` | Previous pipeline output directory (enables comparison) |
+| `--prefix` | File prefix pattern |
+| `--full` | Flag all genomes, not just new ones |
+| `-o` | Save report to file (otherwise prints to stdout) |
 
-Dataset-level checks: outlier count, clock rate shift, R², ADAR branch count, genome count, version changes/retractions.
+**Per-sequence flags:** `high_adar`, `high_Ns`, `low_coverage`, `near_outlier`, `many_gaps`, `long_branch`, `duplicate_sample`, `phylo_conflict`.
 
-### Run comparison
+**Dataset-level checks:** outlier count, clock rate shift, R², ADAR branch count, genome count, version changes/retractions.
+
+Without `--previous`, comparison checks (rate shift, new/removed accessions, version changes, watchlist deltas) are skipped. The standalone checks are still useful as a sanity check, but most of the information is already in the pipeline output files (`rtt_summary.txt`, `outliers.txt`, `adar_report.txt`, `qc_report_*.txt`).
+
+**When to use standalone:** Post-hoc comparison of two runs, or quick sanity check on a completed run without rerunning the pipeline.
+
+### `compare_runs.py` — Run comparison
+
+Side-by-side diff of two completed pipeline runs.
 
 ```bash
-mamba run -n bdbv python bin/compare_runs.py --current data/20261029 --previous data/20261012 --prefix Ituri2026.DRC_trimmed
+python bin/compare_runs.py \
+    --current /path/to/20261104_drc \
+    --previous /path/to/20261103_drc \
+    --prefix BDBV2026.drc \
+    --adar-mode mask \
+    -o /path/to/20261104_drc/run_comparison.txt
 ```
 
-Side-by-side diff of two pipeline runs: sequence counts, added/removed accessions, exclude list changes, clock rate, ADAR summary, metadata differences.
+Reports: sequence counts, added/removed accessions, exclude list changes, clock rate comparison, ADAR summary, metadata differences.
+
+**When to use standalone:** Comparing any two runs after the fact, without rerunning the pipeline.
 
 ## Environment notes
 

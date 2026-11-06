@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Single entry point: download → quality report → pipeline → health checks → BEAST XMLs.
+"""Single entry point: download → quality report → pipeline → health checks.
 
 Optional flags:
   --previous-data   Enables count comparison, health checks, and run diff
@@ -200,17 +200,9 @@ def main():
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--aliases-file', default='data/aliases.csv')
 
-    # XML generation
-    parser.add_argument('--template-sg', default=None, help='SkyGrid template XML')
-    parser.add_argument('--template-egc', default=None, help='EGC template XML')
-    parser.add_argument('--anchor-date', default='2025-11-08', help='SkyGrid anchor date')
-    parser.add_argument('--chain-length', type=int, default=100_000_000)
-    parser.add_argument('--log-every', type=int, default=10_000)
-
     # Control
     parser.add_argument('--skip-download', action='store_true', help='Skip download (use existing files in --outdir)')
     parser.add_argument('--skip-pipeline', action='store_true', help='Skip pipeline (use existing pipeline outputs)')
-    parser.add_argument('--skip-beast-xmls', action='store_true', help='Skip XML generation')
     parser.add_argument('--full-check', action='store_true', help='Run health checks on all genomes, not just new ones')
     parser.add_argument('--organism', default='ebola-bdbv')
     parser.add_argument('--scope', default='drc',
@@ -474,44 +466,7 @@ def main():
     rlog.blank()
 
     # ------------------------------------------------------------------
-    # 7. Generate BEAST XMLs
-    # ------------------------------------------------------------------
-    rlog.step('BEAST XMLs')
-    if not args.skip_beast_xmls and any([args.template_sg, args.template_egc]):
-        adar_tag = 'ADAR_masked' if args.adar_mode == 'mask' else 'ADAR_excluded'
-        final_aln = outdir / f'{args.prefix}.{adar_tag}.final.aln'
-        if not final_aln.exists():
-            print(f"WARNING: {final_aln} not found, skipping XML generation")
-        else:
-            n_final = count_sequences(str(final_aln))
-            beast_prefix = f'{args.prefix}.{adar_tag}.n{n_final}'
-
-            xml_script = SCRIPTS_DIR / 'generate_beast_xml.py'
-            cmd = (
-                f'{PYTHON} {xml_script}'
-                f' -a {final_aln}'
-                f' -o {outdir}'
-                f' -p {beast_prefix}'
-                f' --chain-length {args.chain_length}'
-                f' --log-every {args.log_every}'
-            )
-            if args.template_sg:
-                cmd += f' --template-sg {args.template_sg}'
-                cmd += f' --anchor-date {args.anchor_date}'
-            if args.template_egc:
-                cmd += f' --template-egc {args.template_egc}'
-            run(cmd, f'Generating BEAST XMLs (n={n_final})')
-
-            print(f"\nBEAST XMLs in: {outdir}")
-            for xml in sorted(outdir.glob('*.xml')):
-                rlog.log(f'Generated: {xml.name}')
-                print(f"  {xml}")
-    else:
-        rlog.log('Skipped')
-    rlog.blank()
-
-    # ------------------------------------------------------------------
-    # 8. Run comparison
+    # 7. Run comparison
     # ------------------------------------------------------------------
     rlog.step('Run comparison')
     comparison_report = outdir / 'run_comparison.txt'
@@ -537,11 +492,11 @@ def main():
     rlog.blank()
 
     # ------------------------------------------------------------------
-    # 9. Summary
+    # 8. Summary
     # ------------------------------------------------------------------
     rlog.step('Output files')
     for f in sorted(outdir.iterdir()):
-        if f.suffix in ('.txt', '.csv', '.tsv', '.aln', '.xml', '.fasta', '.treefile', '.pdf', '.png'):
+        if f.suffix in ('.txt', '.csv', '.tsv', '.aln', '.fasta', '.treefile', '.pdf', '.png'):
             rlog.log(f.name)
     rlog.blank()
     rlog.finish()
@@ -554,9 +509,6 @@ def main():
     if args.previous_data:
         print(f"Health report:     {health_report}")
         print(f"Run comparison:    {comparison_report}")
-    if not args.skip_beast_xmls and any([args.template_sg, args.template_egc]):
-        print(f"BEAST XMLs:        {outdir}/*.xml")
-
     # Slack notification
     if args.slack_webhook:
         try:

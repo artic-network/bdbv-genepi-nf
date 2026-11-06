@@ -1,6 +1,8 @@
 # BDBV Phylogenetic Pipeline
 
-Automated pipeline for downloading, cleaning, and building maximum-likelihood phylogenies from Bundibugyo ebolavirus (BDBV) genome sequences hosted on [Pathoplexus](https://pathoplexus.org).
+Automated pipeline for downloading, cleaning, and building maximum-likelihood phylogenies from Bundibugyo ebolavirus (BDBV) genome sequences hosted on [Pathoplexus](https://pathoplexus.org). Ends at the final alignment and ML tree.
+
+For BEAST XML generation, postprocessing, and figure generation, see [bdbv-pipeline-part2](https://github.com/your-org/bdbv-pipeline-part2).
 
 ## Setup
 
@@ -62,7 +64,7 @@ mamba run -n bdbv python bin/run.py \
     --seed 42
 ```
 
-Full run with linelist, previous data, and BEAST XMLs:
+Full run with linelist and previous data:
 
 ```bash
 mamba run -n bdbv python bin/run.py \
@@ -76,8 +78,7 @@ mamba run -n bdbv python bin/run.py \
     --seed 42 \
     --linelist data/CONFIDENTIAL-linelist.xlsx \
     --aliases-file data/aliases.csv \
-    --hz-lookup data/health_area_zone_province_slim.csv \
-    --template-sg templates/GTR_SG_MAT.template.xml
+    --hz-lookup data/health_area_zone_province_slim.csv
 ```
 
 **Steps** (each logged with timestamps to `run_log.txt`):
@@ -88,9 +89,8 @@ mamba run -n bdbv python bin/run.py \
 4. **Merge exclude lists** — Combine `exclude.txt` + `exclude_auto.txt` → `exclude_merged.txt`
 5. **Pipeline** — Clean, ADAR masking, tree building, temporal rooting, outlier removal
 6. **Health checks** — Per-sequence flags and dataset-level checks *(requires `--previous-data`)*
-7. **BEAST XMLs** — Generate XML files from templates *(requires `--template-sg` or `--template-egc`)*
-8. **Run comparison** — Side-by-side diff with previous run *(requires `--previous-data`)*
-9. **Summary** — List output files
+7. **Run comparison** — Side-by-side diff with previous run *(requires `--previous-data`)*
+8. **Summary** — List output files
 
 | Flag | Description |
 |------|-------------|
@@ -111,11 +111,7 @@ mamba run -n bdbv python bin/run.py \
 | `--adar-mode` | `mask` (default), `exclude_tc`, or `exclude_all` |
 | `--skip-download` | Use existing files in `--outdir` |
 | `--skip-pipeline` | Skip pipeline step |
-| `--skip-beast-xmls` | Skip BEAST XML generation |
 | `--full-check` | Run health checks on all genomes, not just new ones |
-| `--template-sg` | SkyGrid template XML |
-| `--template-egc` | EGC template XML |
-| `--anchor-date` | SkyGrid anchor date (default: `2025-11-08`) |
 | `--slack-webhook` | Slack webhook URL for notifications |
 
 ### Inputs and outputs
@@ -126,7 +122,6 @@ mamba run -n bdbv python bin/run.py \
 - `data/exclude.txt` (manual exclusions)
 - `data/aliases.csv` (location name mappings)
 - `data/health_area_zone_province_slim.csv` (location hierarchy)
-- BEAST template XMLs (optional, for XML generation)
 
 **Outputs (in `--outdir`):**
 
@@ -149,7 +144,6 @@ mamba run -n bdbv python bin/run.py \
 | `health_check_report.txt` | Per-sequence flags and dataset-level checks |
 | `run_comparison.txt` | Diff vs previous run |
 | `run_log.txt` | Timestamped log of all steps |
-| `*.xml` | BEAST XML files (if templates provided) |
 
 ## Metadata quality report
 
@@ -413,36 +407,6 @@ Omit `--outlier-removal-threshold` for manual outlier review. The pipeline stops
 
 **When to use standalone:** Resuming from a specific step (`--skip-to`), stopping early (`--stop-after`), or running with manual outlier review (omit `--outlier-removal-threshold`).
 
-### `generate_beast_xml.py` — BEAST XML generation
-
-Generates BEAST XML files from templates. Swaps in the real alignment, updates SkyGrid parameters (weekly grid intervals from anchor date to latest sample), and adjusts operator weights for dataset size.
-
-```bash
-python bin/generate_beast_xml.py \
-    -a /path/to/prefix.ADAR_masked.final.aln \
-    -o /path/to/output/ \
-    -p prefix.nNNN \
-    --template-sg templates/GTR_SG_MAT.template.xml \
-    --anchor-date 2025-11-08
-```
-
-| Flag | Description |
-|------|-------------|
-| `-a` | Final alignment (required) |
-| `-o` | Output directory |
-| `-p` | Output prefix |
-| `--template-sg` | SkyGrid template XML |
-| `--template-egc` | EGC template XML |
-| `--anchor-date` | SkyGrid anchor date (default: `2025-11-08`) |
-| `--chain-length` | MCMC chain length (default: 100,000,000) |
-| `--log-every` | Log sampling interval (default: 10,000) |
-
-Two SkyGrid templates are available:
-- **`GTR_SG.template.xml`** — Standard SkyGrid. Works with any BEAST X version.
-- **`GTR_SG_MAT.template.xml`** — SkyGrid using mutation-annotated trees. Requires a MAT-specific release of BEAST X.
-
-**When to use standalone:** Generating XMLs for a different alignment or with different chain settings.
-
 ### `health_checks.py` — Health checks
 
 Runs per-sequence flags and dataset-level checks. Most useful when comparing two runs to detect regressions.
@@ -519,7 +483,6 @@ Each row shows a pipeline step, the script it runs, its required inputs, its out
 | final_root | `temporal_root.py` | `{d}/{p}.ADAR_masked.final.aln.treefile` | `{d}/{p}.ADAR_masked.final.bestFitRoot.tree`, `{d}/{p}.ADAR_masked.final.rtt_plot.pdf`, `{d}/{p}.ADAR_masked.final.rtt_summary.txt` | — |
 | health_checks | `health_checks.py` | `{d}/` (current run dir), previous run dir (optional) | `{d}/health_check_report.txt` | — |
 | compare_runs | `compare_runs.py` | `{d}/` (current), previous run dir | `{d}/run_comparison.txt` | — |
-| beast_xmls | `generate_beast_xml.py` | `{d}/{p}.ADAR_masked.final.aln`, template XMLs | `{d}/*.xml` | — |
 
 **Step dependency chain:**
 
@@ -532,7 +495,6 @@ download → metadata_qc → merge_excludes
                                                               ↓
                                                           iqtree2 → temporal_root → filter_outliers → iqtree3 → final_root
                                                                                                                      ↓
-                                                                                                              beast_xmls
                                                                                                               health_checks
                                                                                                               compare_runs
 ```
@@ -542,7 +504,7 @@ download → metadata_qc → merge_excludes
 - `iqtree3` must be on `PATH`. Three IQ-TREE calls: `iqtree1` uses `--ancestral` + either `MFP` or a fixed model; `iqtree2` uses the saved model; `iqtree3` adds `-abayes`.
 - `raccoon` must be on `PATH` (installed via pip in the conda env).
 - `qc_basic` and `qc_phylo` are reporting-only steps with no downstream dependencies — they can run in parallel with the main chain.
-- `health_checks`, `compare_runs`, and `beast_xmls` are independent of each other and can run in parallel after `final_root`.
+- `health_checks` and `compare_runs` are independent of each other and can run in parallel after `final_root`.
 - `merge_excludes` is an inline function in `run.py` — it deduplicates and concatenates text files. Will need to be extracted or reimplemented for Nextflow.
 - `pre_filter` and `filter_outliers` are inline functions in `run_pipeline.py` — they filter a FASTA by accession IDs in exclude files. Will need to be extracted or reimplemented for Nextflow.
 

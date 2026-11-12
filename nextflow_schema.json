@@ -25,6 +25,12 @@
           "description": "Comma-separated list of countries (drc,kenya,uganda) or 'outbreak' for all",
           "default": "drc"
         },
+        "max_date": {
+          "type": "string",
+          "title": "Maximum collection date",
+          "description": "Latest collection date to download (YYYY-MM-DD). Default: no upper limit",
+          "help_text": "Only used when downloading from Pathoplexus (no --fasta)."
+        },
         "fasta": {
           "type": "string",
           "title": "FASTA",

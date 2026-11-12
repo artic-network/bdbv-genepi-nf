@@ -1,0 +1,6 @@
+.git
+.github
+.nextflow*
+work
+output
+data

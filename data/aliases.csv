@@ -1,11 +1,13 @@
 observed_name,canonical_nom,source,mismatch_reason,notes
-Mongwalu,Mongbalu,fasta,,Header spelling variant (Ituri_2026-06-30 export)
-Mongbwalu,Mongbalu,fasta,,Header spelling variant (ebola-bdbv_2026-07-03 export)
-Mungwalu,Mongbalu,fasta,,Alternate transcription in FASTA headers
-Gety,Gethy,fasta,,Common outbreak spelling variant
+Mongwalu,Mongbwalu,fasta,,Header spelling variant (Ituri_2026-06-30 export)
+Mongbalu,Mongbwalu,fasta,,Alternate spelling in FASTA headers
+Mungwalu,Mongbwalu,fasta,,Alternate transcription in FASTA headers
+Mongbwalu,Mongbwalu,fasta,,Direct match to shapefile
+Gethy,Gety,fasta,,Alternate spelling in FASTA headers
+Gety,Gety,fasta,,Direct match to shapefile
 Komanda,Komanda,fasta,,Direct match to MoH health zone
-Nyankunde,Nyakunde,fasta,,Common outbreak spelling variant
-Nyankunnde,Nyakunde,fasta,,Typo (double n) in FASTA headers
+Nyakunde,Nyankunde,fasta,,Alternate spelling in FASTA headers
+Nyankunnde,Nyankunde,fasta,,Typo (double n) in FASTA headers
 Aru,Aru,fasta,,Direct match to MoH health zone
 Aungba,Aungba,fasta,,Direct match to MoH health zone
 Bambu,Bambu,fasta,,Direct match to MoH health zone
@@ -19,12 +21,13 @@ Lumumba,Bunia,fasta,health_area,FASTA location is quartier Lumumba (Aire de Sant
 Mambasa,Mambasa,fasta,,Direct match to MoH health zone
 Mangala,Mangala,fasta,,Direct match to MoH health zone
 Nizi,Nizi,fasta,,Direct match to MoH health zone
-Nyakunde,Nyakunde,fasta,,Direct match to MoH health zone
+Nyankunde,Nyankunde,fasta,,Direct match to shapefile
 Rimba,Rimba,fasta,,Direct match to MoH health zone
 Rwampara,Rwampara,fasta,,Direct match to MoH health zone
-Sota,Nyakunde,fasta,health_area,FASTA location is Aire de Santé Sota (within ZS Nyakunde)
+Sota,Nyankunde,fasta,health_area,FASTA location is Aire de Santé Sota (within ZS Nyankunde)
 Drodro,Drodro,fasta,,Direct match to MoH health zone
 fataki,Fataki,fasta,,Type (lowercase F)
+Fataki,Fataki,fasta,,Direct match to MoH health zone
 Mandima,Mandima,fasta,,Direct match to MoH health zone
 Nia,Nia Nia,fasta,,Spelling variant
 Nia Nia,Nia Nia,fasta,,Direct match to MoH health zone
@@ -33,9 +36,9 @@ Nia-Nia,Nia Nia,fasta,,Typo (hyphen)
 Nia-Nią,Nia Nia,fasta,,Typo (hyphen + trailing diacritic U+0105)
 Niania,Nia Nia,fasta,,Typo (one word)
 Tchomia,Tchomia,fasta,,Direct match to MoH health zone
-Bahwere,Lita,fasta,,
-Mandje,Lita,fasta,,
-Sukisa,Bunia,fasta,,Bunia health zone
+Bahwere,Lita,fasta,health_area,HA Bahwere is in HZ Lita (Ituri) per official mapping
+Mandje,Mangala,fasta,health_area,HA Mandje is in HZ Mangala (Ituri) per official mapping
+Sukisa,Buta,fasta,health_area,HA Sukisa is in HZ Buta (Bas-Uele) per official mapping; FASTA header says Bunia (Ituri) — discrepancy noted
 Adi,Adi,fasta,,Direct match to MoH health zone
 Beni,Beni,fasta,,Direct match to MoH health zone
 Butembo,Butembo,fasta,,Direct match to MoH health zone
@@ -43,3 +46,18 @@ Kalunguta,Kalunguta,fasta,,Direct match to MoH health zone
 Katana,Katana,fasta,,Direct match to MoH health zone
 Masereka,Masereka,fasta,,Direct match to MoH health zone
 Vuhovi,Vuhovi,fasta,,Direct match to MoH health zone
+Kambala,Kambala,fasta,,Direct match to MoH health zone
+Nia-Nia,Nia Nia,sitrep,,Sitrep hyphen variant
+Makiso-Kisangani,Makiso Kisangani,sitrep,,Sitrep hyphen variant
+Miti-Murhesa,Miti Murhesa,sitrep,,Sitrep hyphen variant
+Gethy,Gety,sitrep,,Sitrep spelling variant (also aliased for fasta)
+Lubunga,Lubunga (Tshopo),sitrep,,Sitrep missing province qualifier
+BAMBU,Bambu,linelist,,Linelist uppercase variant
+LITA,Lita,linelist,,Linelist uppercase variant
+Nyakunde,Nyankunde,linelist,,Linelist spelling variant (reversed from fasta alias direction)
+KOM,Komanda,fasta,,Abbreviation used in submission IDs (KOM-XXX)
+Bafwasende,Bafwasende,fasta,,Direct match to MoH health zone (Tshopo)
+Gemena,Gemena,fasta,,Direct match to MoH health zone (Sud-Ubangi)
+Kabondo,Kabondo,fasta,,Direct match to MoH health zone (Tshopo)
+Lolwa,Lolwa,fasta,,Direct match to MoH health zone (Tshopo)
+Mangobo,Mangobo,fasta,,Direct match to MoH health zone (Tshopo)

@@ -2,7 +2,7 @@
 
 **Download, clean and build maximum-likelihood phylogenies from Bundibugyo ebolavirus (BDBV) genomes**
 
-A [Nextflow](https://www.nextflow.io/) pipeline for downloading Bundibugyo ebolavirus (BDBV) genome sequences from [Pathoplexus](https://pathoplexus.org), cleaning and quality-checking them, handling ADAR-edited genomes, building a temporally rooted maximum-likelihood tree, and generating [BEAST](https://beast.community/) XML files for the final dataset. It can be run as an initial run on a fresh download, or as an update run that also compares the new dataset with a previous one. Every step runs in a Docker container by default.
+A [Nextflow](https://www.nextflow.io/) pipeline for downloading Bundibugyo ebolavirus (BDBV) genome sequences from [Pathoplexus](https://pathoplexus.org), cleaning and quality-checking them, handling ADAR-edited genomes, and building a temporally rooted maximum-likelihood tree. It can be run as an initial run on a fresh download, or as an update run that also compares the new dataset with a previous one. Every step runs in a Docker container by default.
 
 ## Pipeline overview
 
@@ -10,9 +10,9 @@ The pipeline works through the following stages:
 
 1. **Download** *(`download`)* — fetch the aligned sequences and metadata from Pathoplexus. Skipped if you provide `--fasta` and `--metadata`.
 2. **Align** *(`mafft`, optional, `--mafft`)* — [MAFFT](https://mafft.cbrc.jp/alignment/software/) alignment, only needed for unaligned input. Pathoplexus sequences are already aligned.
-3. **Clean** *(`clean`)* — rename headers, trim, deduplicate versions, standardise locations using the aliases file and apply the date filter.
+3. **Clean** *(`clean`)* — rename headers, trim, mask any specified sites (`--mask_sites`), deduplicate versions, standardise locations using the aliases file and apply the date filter.
 4. **Basic QC** *(`qc_basic`)* — genome-level QC report.
-5. **Pre-filter** *(`pre_filter`)* — remove sequences in the identity, quality and pending exclusion lists.
+5. **Pre-filter** *(`pre_filter`)* — remove sequences in the manual and pending exclusion lists.
 6. **Initial tree** *(`iqtree_ancestral`)* — [IQ-TREE](http://www.iqtree.org/) ML tree with ModelFinder (or a fixed `--model`) and ancestral state reconstruction.
 7. **ADAR identification** *(`raccoon`)* — identify ADAR-edited sites with [raccoon](https://github.com/artic-network/raccoon).
 8. **ADAR handling** *(`adar_mask`)* — mask the ADAR sites, or exclude affected genomes (`--adar_mode`).
@@ -21,14 +21,13 @@ The pipeline works through the following stages:
 11. **Temporal rooting** *(`temporal_root`)* — best-fitting temporal root and outlier detection (**review point 1**).
 12. **Outlier removal** *(`select_outliers`, `filter_outliers`)* — remove temporal outliers, either automatically or from a file you have reviewed (**review point 1**).
 13. **Final tree** *(`iqtree_final`, `final_root`)* — final ML tree with aBayes branch support, temporally rooted.
-14. **Health checks** *(`health_checks`, update runs only)* — compare with a previous dataset and flag problem genomes (**review point 2**).
-15. **BEAST XMLs** *(`beast_xml`)* — generate BEAST XML files from the final alignment, one per template.
+14. **Health checks** *(`health_checks`, update runs only)* — compare with a previous dataset and flag problem genomes (update runs only).
 
 ```mermaid
 flowchart LR
     D[download] --> C[clean] --> F[pre_filter] --> I1[iqtree_ancestral] --> R[raccoon] --> A[adar_mask] --> I2[iqtree_adar] --> T[temporal_root]
     T --> O{{review point 1:<br/>outliers}} --> FO[filter_outliers] --> I3[iqtree_final] --> FR[final_root]
-    I3 --> H{{review point 2:<br/>health checks}} --> B[beast_xml]
+    I3 --> H[health_checks]
     C --> Q[qc_basic]
     R --> QP[qc_phylo]
 ```
@@ -54,7 +53,7 @@ No other setup is needed. The pipeline pulls the [`articnetworkorg/bdbv-pipeline
 
 ### Initial run
 
-Downloads from Pathoplexus, builds the tree and generates BEAST XMLs, automatically removing outliers with |z| ≥ 3:
+Downloads from Pathoplexus, builds the tree, automatically removing outliers with |z| ≥ 3:
 
 ```bash
 nextflow run . \
@@ -85,14 +84,14 @@ nextflow run . \
     --outlier_removal_threshold 3
 ```
 
-The report is written to `health_checks/health_check_report.txt`. Unlike the Python `run_update.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
+The report is written to `health_checks/health_check_report.txt`. Unlike the Python `bin/run.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
 
 - `health_checks/exclude_pending.additions.txt` — new `duplicate_sample` flags to add to `data/exclude_pending.txt`
 - `health_checks/retractions.additions.txt` — retracted accessions to add to your `retractions.txt`
 
 ### Manual review points and resuming
 
-There are two places where you may want to stop and review before continuing. At each, the pipeline stops and prints the command to resume at the end of the run. Resume with `-resume` so completed steps are reused from the cache.
+There is a place where you may want to stop and review before continuing. The pipeline stops and prints the command to resume at the end of the run. Resume with `-resume` so completed steps are reused from the cache.
 
 > **Resuming on a later day:** `--run_name` defaults to today's date, so a resume the next day changes the prefix and reruns cached steps. Set `--run_name` explicitly (e.g. `--run_name 20261026`) on every command for a run you plan to resume, and keep the same `--outdir` and input parameters.
 
@@ -102,11 +101,7 @@ There are two places where you may want to stop and review before continuing. At
 nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
 ```
 
-**2. Health checks (before BEAST XMLs).** Add `--stop_after_health_checks` (with `--previous_data`) to stop after the health checks. Review the report and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt`; the tree steps rerun because the input of `pre_filter` has changed. If nothing needs excluding, resume without the flag to generate the XMLs:
-
-```bash
-nextflow run . <same parameters> -resume
-```
+Health checks (update runs) are the final step. Review `health_checks/health_check_report.txt` and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt`; the tree steps rerun because the input of `pre_filter` has changed.
 
 ## Output files
 
@@ -124,7 +119,6 @@ All outputs are written under `--outdir`, one folder per step:
 | `temporal_root/` | Rooted tree, RTT plot and detected outliers (`outliers.txt` when auto-removed) |
 | `final/` | Final alignment, ML tree with aBayes support and temporally rooted tree |
 | `health_checks/` | Health check report and suggested exclusions and retractions (update runs) |
-| `beast_xml/` | BEAST XML files |
 | `intermediates/` | MAFFT and pre-filtered alignments (only with `--output_intermediates`) |
 | `execution/` | Nextflow timeline, report and trace |
 
@@ -162,7 +156,6 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 | `--adar_mode` | `mask` masks ADAR sites; `exclude_tc` excludes T>C genomes; `exclude_all` excludes T>C/A>G/G>A genomes. Health checks currently only work with `mask` | `mask` |
 | `--outlier_removal_threshold` | Auto-remove temporal outliers with \|z\| ≥ this value and continue. If neither this nor `--outlier_file` is given, the pipeline stops after temporal rooting for review | |
 | `--full_health_check` | Run health checks on all genomes, not just new ones | `false` |
-| `--stop_after_health_checks` | Stop before generating BEAST XMLs so the health check flags can be reviewed | `false` |
 
 ### Review options
 
@@ -170,20 +163,6 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 |-----------|-------------|---------|
 | `--outlier_file` | Reviewed outlier file; continues from outlier filtering (see [review point 1](#manual-review-points-and-resuming)) | |
 | `--output_intermediates` | Also publish the MAFFT and pre-filtered alignments to `intermediates/` | `false` |
-
-### BEAST options
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `--beast_xml` | Generate BEAST XMLs from the final alignment. Use `--beast_xml false` to skip | `true` |
-| `--template_sg` | SkyGrid coalescent template | `templates/GTR_SG.template.xml` |
-| `--template_egc` | Exponential growth coalescent template | `templates/GTR_EGC.template.xml` |
-| `--template_lgc` | Logistic growth coalescent template | off |
-| `--anchor_date` | SkyGrid anchor date: the grid extends from this date to the latest sample | `2025-11-08` |
-| `--chain_length` | MCMC chain length | `500,000,000` |
-| `--log_every` | Log sampling interval | `50,000` |
-
-One XML is generated for each template. Pass your own file to use a custom template (e.g. `--template_sg my_skygrid.xml`), or `false` to skip one (e.g. `--template_egc false`). The scripts swap the alignment and taxa into the template, update the SkyGrid parameters (weekly grid intervals from the anchor date to the latest sample), adjust operator weights for the dataset size and set the MCMC chain length and logging interval. Templates are in `templates/` with placeholder taxa and N-filled sequences.
 
 ### Additional options
 
@@ -194,15 +173,16 @@ These are available, but the presets are recommended.
 | `--trim_start`, `--trim_end` | First and last alignment positions to keep (1-based, inclusive) | |
 | `--seed` | IQ-TREE random seed | `42` |
 | `--aliases_file` | CSV mapping observed `admin2` location names to canonical names | `data/aliases.csv` |
-| `--exclude_file` | Accessions to exclude from everything | `data/exclude_identity.txt` |
-| `--exclude_quality` | Accessions to exclude from phylogenetics only | `data/exclude_quality.txt` |
+| `--mask_sites` | Comma-separated 1-based positions to mask to N (e.g. `5246,5249,5251`) | |
+| `--mask_sites_file` | File of 1-based positions to mask, one per line (`#` comments allowed) | |
+| `--exclude_file` | Accessions to always exclude from analysis | `data/exclude.txt` |
 | `--exclude_pending` | Accessions temporarily excluded while under review | `data/exclude_pending.txt` |
 
 ## Data files
 
 - **`data/aliases.csv`** — maps observed `admin2` location names to canonical names. Update it periodically as new sequences with novel location spellings are submitted (the pipeline lists any it does not recognise in `to_review/missing_aliases.txt`).
-- **`data/exclude_identity.txt`** — accessions to exclude from all analyses (duplicates, non-consortium, withdrawn).
-- **`data/exclude_quality.txt`** — accessions to exclude from phylogenetic analyses only (low quality).
+- **`data/exclude.txt`** — accessions to always exclude from analysis (e.g. non-consortium sequences). `data/exclusion_log.tsv` records why sequences were excluded.
+- **`data/mask_sites.txt`** — alignment positions currently masked, and why. Pass it with `--mask_sites_file`.
 - **`data/exclude_pending.txt`** — accessions temporarily excluded while under review (e.g. flagged `duplicate_sample` by the health checks).
 
 ## Health checks
@@ -234,33 +214,16 @@ python bin/run_pipeline.py \
     -m data/YYYYMMDD/metadata.tsv \
     -p data/YYYYMMDD/prefix \
     --min-date 2026-05-01 \
-    --exclude-file data/exclude_identity.txt \
-    --exclude-quality data/exclude_quality.txt \
+    --exclude-file data/exclude.txt \
+    --mask-sites-file data/mask_sites.txt \
     --adar-mode mask \
     --outlier-removal-threshold 3
 ```
 
-**Generate BEAST XMLs:**
+**Run the full workflow in one command** (download → quality report → pipeline → health checks; unlike the Nextflow pipeline this appends `duplicate_sample` flags to `data/exclude_pending.txt` itself):
 
 ```bash
-python bin/generate_beast_xml.py \
-    -a data/YYYYMMDD/prefix.ADAR_masked.final.aln \
-    -o data/YYYYMMDD \
-    -p prefix.n978 \
-    --template-egc templates/GTR_EGC.template.xml \
-    --template-sg templates/GTR_SG.template.xml \
-    --template-lgc templates/GTR_LGC.template.xml \
-    --anchor-date 2025-11-08
-```
-
-**Run an update in one command** (download → pipeline → health checks → BEAST XMLs; unlike the Nextflow pipeline this appends `duplicate_sample` flags to `data/exclude_pending.txt` itself):
-
-```bash
-python bin/run_update.py \
-    --previous-data data/20260915 \
-    --template-sg templates/GTR_SG.template.xml \
-    --template-egc templates/GTR_EGC.template.xml \
-    --anchor-date 2025-11-08
+python bin/run.py --previous-data data/20260915 --outdir data/YYYYMMDD --prefix BDBV2026.outbreak --scope outbreak
 ```
 
 **Run health checks:**

@@ -1,0 +1,17 @@
+date	accession	submissionId	action	previous_list	reason
+2026-10-29	BIA-9012	BIA-9012	removed	exclude_quality.txt	Was submissionId not accession; sequence re-checked, now passes QC (92% complete, ADAR-dominated mismatches)
+2026-10-29	NIZI-1719	NIZI-1719	removed	exclude_quality.txt	Was submissionId not accession; sequence re-checked, now passes QC (92% complete, 2 mismatches)
+2026-10-29	BIA-9028	BIA-9028	removed	exclude_quality.txt	Was submissionId not accession; sequence re-checked, now passes QC (ADAR-dominated mismatches)
+2026-10-29	PP_0081FXE	BIA-9225	removed	exclude_pending.txt	Bare accession (missing .1); now caught by auto-duplicate detection via submissionId
+2026-10-29	PP_0081G32	BIA-9457	removed	exclude_pending.txt	Bare accession (missing .1); now caught by auto-duplicate detection via submissionId
+2026-10-29	PP_0081GAN	BIA-9714	removed	exclude_pending.txt	Bare accession (missing .1); now caught by auto-duplicate detection via submissionId
+2026-10-29	PP_0081GBL	BIA-9715	removed	exclude_pending.txt	Bare accession (missing .1); now caught by auto-duplicate detection via submissionId
+2026-10-29	PP_0081GCJ	BIA-9716	removed	exclude_pending.txt	Bare accession (missing .1); now caught by auto-duplicate detection via submissionId
+2026-10-29	PP_007C4V8.1	-	removed	exclude_identity.txt	Now caught by auto-duplicate detection (specimenCollectorSampleId match)
+2026-10-29	PP_007C4Y2.1	-	removed	exclude_identity.txt	Now caught by auto-duplicate detection (specimenCollectorSampleId match)
+2026-10-29	PP_007C6TA.1	-	removed	exclude_identity.txt	Now caught by auto-duplicate detection (submissionId match)
+2026-10-29	PP_007BYCH.1	-	removed	exclude_identity.txt	Now caught by auto-duplicate detection (submissionId match)
+2026-10-29	PP_007C7C6.1	-	removed	exclude_identity.txt	Now caught by auto-duplicate detection (submissionId match)
+2026-10-29	PP_007C7F0.1	-	removed	exclude_identity.txt	Now caught by auto-duplicate detection (submissionId match)
+2026-10-29	PP_0076534.1	-	removed	exclude_identity.txt	No longer on Pathoplexus (withdrawn)
+2026-10-29	PP_007JXB5.1	26FHV045	moved	exclude_identity.txt	Moved to exclude.txt — non-consortium sequence (not a duplicate)

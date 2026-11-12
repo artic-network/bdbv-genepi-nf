@@ -18,6 +18,7 @@ process clean {
     path fasta
     path metadata
     path aliases
+    path mask_sites_file
 
   output:
     path "${params.prefix}.cleaned.aln", emit: aln
@@ -33,6 +34,10 @@ process clean {
         extra += " --trim_end ${params.trim_end}"
     if ( params.min_date )
         extra += " --min-date ${params.min_date}"
+    if ( params.mask_sites )
+        extra += " --mask_sites ${params.mask_sites}"
+    if ( params.mask_sites_file )
+        extra += " --mask_sites_file ${mask_sites_file}"
     """
     clean_up_pathoplexus.py -f ${fasta} -m ${metadata} -a ${aliases} -p ${params.prefix}.cleaned --missing-aliases-out missing_aliases.txt ${extra} \
         | tee ${params.prefix}.cleaned.log

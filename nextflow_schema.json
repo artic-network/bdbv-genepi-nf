@@ -118,12 +118,6 @@
           "title": "Full health check",
           "description": "Run health checks on all genomes, not just new ones",
           "default": false
-        },
-        "stop_after_health_checks": {
-          "type": "boolean",
-          "title": "Stop after health checks",
-          "description": "Stop before generating BEAST XMLs so health check flags can be reviewed",
-          "default": false
         }
       }
     },
@@ -177,14 +171,8 @@
         },
         "exclude_file": {
           "type": "string",
-          "title": "Identity exclusions",
-          "description": "Saved accessions to exclude from everything (duplicates, non-consortium, withdrawn)",
-          "format": "file-path"
-        },
-        "exclude_quality": {
-          "type": "string",
-          "title": "Quality exclusions",
-          "description": "Saved accessions to exclude from phylogenetics (low quality)",
+          "title": "Manual exclusions",
+          "description": "Saved accessions to always exclude from analysis (e.g. non-consortium sequences)",
           "format": "file-path"
         },
         "exclude_pending": {
@@ -192,60 +180,18 @@
           "title": "Pending exclusions",
           "description": "Accessions temporarily excluded while under review",
           "format": "file-path"
-        }
-      }
-    },
-    "beast_options": {
-      "title": "BEAST Options",
-      "type": "object",
-      "description": "BEAST XML generation from the final alignment.",
-      "properties": {
-        "beast_xml": {
-          "type": "boolean",
-          "title": "Generate BEAST XMLs",
-          "description": "Generate BEAST XMLs from the final alignment",
-          "default": true
         },
-         "chain_length": {
-          "type": "integer",
-          "title": "Chain length",
-          "description": "MCMC chain length (script default: 500,000,000)"
-        },
-        "log_every": {
-          "type": "integer",
-          "title": "Log every",
-          "description": "Log sampling interval (script default: 50,000)"
-        },
-        
-        "anchor_date": {
+        "mask_sites": {
           "type": "string",
-          "title": "Anchor date",
-          "description": "SkyGrid anchor date; the grid extends from this date to the latest sample",
-          "default": "2025-11-08"
+          "title": "Mask sites",
+          "description": "Comma-separated 1-based positions to mask to N (e.g. 5246,5249,5251)"
         },
-        "template_sg": {
+        "mask_sites_file": {
           "type": "string",
-          "title": "SkyGrid template",
-          "description": "SkyGrid coalescent template (uses --anchor_date)",
-          "help_text": "Defaults to templates/GTR_SG.template.xml. Pass your own file to use a custom template, or use `false` to skip (e.g. `--template_sg false`).",
-          "format": "file-path"
-        },
-        "template_egc": {
-          "type": "string",
-          "title": "EGC template",
-          "description": "Exponential growth coalescent template",
-          "help_text": "Defaults to templates/GTR_EGC.template.xml. Pass your own file to use a custom template, or use `false` to skip (e.g. `--template_egc false`).",
-          "format": "file-path"
-        },
-        "template_lgc": {
-          "type": "string",
-          "title": "LGC template",
-          "description": "Logistic growth coalescent template",
-          "help_text": "Off by default. Pass a template file, e.g. templates/GTR_LGC.template.xml, to also generate an LGC XML.",
+          "title": "Mask sites file",
+          "description": "File with 1-based positions to mask, one per line (# comments allowed)",
           "format": "file-path"
         }
-        
-       
       }
     },
     "miscellaneous_options": {
@@ -286,9 +232,6 @@
     },
     {
       "$ref": "#/definitions/additional_options"
-    },
-    {
-      "$ref": "#/definitions/beast_options"
     },
     {
       "$ref": "#/definitions/miscellaneous_options"

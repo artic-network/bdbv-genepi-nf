@@ -1,0 +1,3 @@
+# Manual exclusions — sequences to always exclude from analysis
+# Non-consortium sequence (26FHV045, submitted outside Pathogen Genomic Lab)
+PP_007JXB5.1

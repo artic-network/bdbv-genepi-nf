@@ -57,13 +57,12 @@ parser = argparse.ArgumentParser(
   [review outliers]
   filter_outliers → iqtree3 → final_root
 
-Exclusion files:
-  --exclude-file    Identity (non-consortium, same-patient duplicates): removed from everything
-  --exclude-quality Quality (low-quality sequences): removed from phylogenetics only
-
 By default, runs clean through temporal_root and stops for outlier review.
 Use --skip-to to resume from any step. Use --stop-after to stop early.
-Use --outlier-removal-threshold 3 to auto-remove outliers and run straight through.""",
+Use --outlier-removal-threshold 3 to auto-remove outliers and run straight through.
+
+Note: This script is the inner pipeline engine. For the full workflow
+(download + quality report + pipeline + health checks), use bin/run.py.""",
     formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument("-f", "--fasta", required=True, help="FASTA file (pre-aligned from Pathoplexus, or unaligned if using --mafft)")
 parser.add_argument("-m", "--metadata", required=True, help="Pathoplexus metadata TSV")
@@ -93,6 +92,10 @@ parser.add_argument("--outlier-removal-threshold", type=float, default=None,
                     help="Auto-remove outliers with |z| >= this threshold (e.g. 3.0) and skip manual review")
 parser.add_argument("--model", type=str, default=None,
                     help="Use this substitution model (e.g. GTR+F+R3) instead of running ModelFinder")
+parser.add_argument("--mask-sites", type=str, default=None,
+                    help="Comma-separated 1-based positions to mask to N (e.g. 5246,5249,5251)")
+parser.add_argument("--mask-sites-file", type=str, default=None,
+                    help="File with 1-based positions to mask, one per line (# comments allowed)")
 parser.add_argument("--min-date", type=str, default=None,
                     help="Remove sequences before this date (YYYY-MM-DD), passed to clean_up_pathoplexus.py")
 args = parser.parse_args()
@@ -161,7 +164,12 @@ if should_run('mafft', args.skip_to, stop_after) and args.mafft:
 
 if should_run('clean', args.skip_to, stop_after):
     min_date_arg = f" --min-date {args.min_date}" if args.min_date else ""
-    run(f"{PYTHON} {clean_script} -f {input_fasta} -m {args.metadata} -a {args.aliases_file} -p {cleaned_prefix}{trim_args}{min_date_arg}",
+    mask_sites_args = ""
+    if args.mask_sites:
+        mask_sites_args += f" --mask_sites {args.mask_sites}"
+    if args.mask_sites_file:
+        mask_sites_args += f" --mask_sites_file {args.mask_sites_file}"
+    run(f"{PYTHON} {clean_script} -f {input_fasta} -m {args.metadata} -a {args.aliases_file} -p {cleaned_prefix}{trim_args}{min_date_arg}{mask_sites_args}",
         "Cleaning alignment (renaming, trimming, default exclusions)")
     print(f"Cleaned: {count_sequences(cleaned_aln)} sequences")
 

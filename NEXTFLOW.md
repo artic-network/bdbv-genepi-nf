@@ -60,8 +60,10 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--fasta`, `--metadata` | Use these instead of downloading |
 | `--scope`, `--organism` | Download scope (`drc`, `drc,kenya`, `outbreak`) and LAPIS organism |
 | `--mafft` | Run MAFFT before cleaning |
-| `--min_date`, `--trim_start`, `--trim_end` | Cleaning options |
-| `--mask_sites`, `--mask_sites_file` | 1-based positions to mask to N (comma-separated list, or a file with one per line) |
+| `--min_date` | Remove sequences dated before this (`YYYY-MM-DD`) |
+| `--trim_start`, `--trim_end` | Alignment positions to keep, 1-based inclusive (default `47` and `18851`) |
+| `--mask_sites`, `--mask_sites_file` | 1-based positions to mask to N (comma-separated list, or a file with one per line). The file defaults to `data/mask_sites.txt`; use `--mask_sites_file false` to mask none |
+| `--output_intermediates` | Publish intermediate alignments (default `true`; `--output_intermediates false` to skip) |
 | `--exclude_file`, `--exclude_pending` | Manual exclusions (default `data/exclude.txt`) and pending-review exclusions |
 | `--model` | Skip ModelFinder and use this model |
 | `--adar_mode` | `mask` (default), `exclude_tc` or `exclude_all` |

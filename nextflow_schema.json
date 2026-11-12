@@ -136,9 +136,9 @@
         "output_intermediates": {
           "type": "boolean",
           "title": "Output intermediates",
-          "description": "Also publish the MAFFT and pre-filtered alignments",
-          "help_text": "Written to the intermediates/ folder of the output directory.",
-          "default": false
+          "description": "Publish intermediate files (the MAFFT and pre-filtered alignments)",
+          "help_text": "On by default. Untick to skip them. Written to the intermediates/ folder of the output directory.",
+          "default": true
         }
       }
     },
@@ -150,12 +150,14 @@
         "trim_start": {
           "type": "integer",
           "title": "Trim start",
-          "description": "First alignment position to keep (1-based, inclusive)"
+          "description": "First alignment position to keep (1-based, inclusive). Earlier positions are masked to N",
+          "default": 47
         },
         "trim_end": {
           "type": "integer",
           "title": "Trim end",
-          "description": "Last alignment position to keep (1-based, inclusive)"
+          "description": "Last alignment position to keep (1-based, inclusive). Later positions are masked to N",
+          "default": 18851
         },
         "seed": {
           "type": "integer",
@@ -190,7 +192,8 @@
           "type": "string",
           "title": "Mask sites file",
           "description": "File with 1-based positions to mask, one per line (# comments allowed)",
-          "format": "file-path"
+          "format": "file-path",
+          "help_text": "Defaults to data/mask_sites.txt. Use `false` to mask no sites."
         }
       }
     },

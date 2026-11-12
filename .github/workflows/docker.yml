@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: articnetworkorg/bdbv-pipeline
+  IMAGE: articnetworkorg/bdbv-genepi
 
 jobs:
   docker:

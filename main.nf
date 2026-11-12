@@ -77,6 +77,7 @@ workflow {
 
 // Message for the outlier review point. It is printed on completion so it is the last thing on screen.
 workflow.onComplete {
+  RunLog.write(workflow, params)
   if ( !workflow.success )
       return
   def adar_tag = params.adar_mode == 'mask' ? 'ADAR_masked' : 'ADAR_excluded'
@@ -95,4 +96,9 @@ workflow.onComplete {
       ==========================================================================
       """.stripIndent()
   }
+}
+
+// The run log is also written when the pipeline fails, so the output of the failed step is kept.
+workflow.onError {
+  RunLog.write(workflow, params)
 }

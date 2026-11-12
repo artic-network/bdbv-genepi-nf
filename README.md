@@ -119,8 +119,9 @@ All outputs are written under `--outdir`, one folder per step:
 | `temporal_root/` | Rooted tree, RTT plot and detected outliers (`outliers.txt` when auto-removed) |
 | `final/` | Final alignment, ML tree with aBayes support and temporally rooted tree |
 | `health_checks/` | Health check report and suggested exclusions and retractions (update runs) |
-| `intermediates/` | MAFFT and pre-filtered alignments (only with `--output_intermediates`) |
+| `intermediates/` | MAFFT and pre-filtered alignments (on by default; turn off with `--output_intermediates false`) |
 | `execution/` | Nextflow timeline, report and trace |
+| `<prefix>.run_log.txt` | Run log: the command, parameters and outcome, followed by the screen output of every step in order. Written whether the run succeeds or fails |
 
 `to_review/missing_aliases.txt` is only written when the cleaning step finds `admin2` locations that are not in `data/aliases.csv`. Add them to the aliases file and rerun.
 
@@ -162,7 +163,7 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `--outlier_file` | Reviewed outlier file; continues from outlier filtering (see [review point 1](#manual-review-points-and-resuming)) | |
-| `--output_intermediates` | Also publish the MAFFT and pre-filtered alignments to `intermediates/` | `false` |
+| `--output_intermediates` | Publish the MAFFT and pre-filtered alignments to `intermediates/`. Use `--output_intermediates false` to skip them | `true` |
 
 ### Additional options
 
@@ -170,11 +171,12 @@ These are available, but the presets are recommended.
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `--trim_start`, `--trim_end` | First and last alignment positions to keep (1-based, inclusive) | |
+| `--trim_start` | First alignment position to keep (1-based, inclusive); earlier positions are masked to N | `47` |
+| `--trim_end` | Last alignment position to keep (1-based, inclusive); later positions are masked to N | `18851` |
 | `--seed` | IQ-TREE random seed | `42` |
 | `--aliases_file` | CSV mapping observed `admin2` location names to canonical names | `data/aliases.csv` |
 | `--mask_sites` | Comma-separated 1-based positions to mask to N (e.g. `5246,5249,5251`) | |
-| `--mask_sites_file` | File of 1-based positions to mask, one per line (`#` comments allowed) | |
+| `--mask_sites_file` | File of 1-based positions to mask, one per line (`#` comments allowed). Use `--mask_sites_file false` to mask none | `data/mask_sites.txt` |
 | `--exclude_file` | Accessions to always exclude from analysis | `data/exclude.txt` |
 | `--exclude_pending` | Accessions temporarily excluded while under review | `data/exclude_pending.txt` |
 
@@ -182,7 +184,7 @@ These are available, but the presets are recommended.
 
 - **`data/aliases.csv`** — maps observed `admin2` location names to canonical names. Update it periodically as new sequences with novel location spellings are submitted (the pipeline lists any it does not recognise in `to_review/missing_aliases.txt`).
 - **`data/exclude.txt`** — accessions to always exclude from analysis (e.g. non-consortium sequences). `data/exclusion_log.tsv` records why sequences were excluded.
-- **`data/mask_sites.txt`** — alignment positions currently masked, and why. Pass it with `--mask_sites_file`.
+- **`data/mask_sites.txt`** — alignment positions currently masked, and why. It is used by default (`--mask_sites_file`).
 - **`data/exclude_pending.txt`** — accessions temporarily excluded while under review (e.g. flagged `duplicate_sample` by the health checks).
 
 ## Health checks

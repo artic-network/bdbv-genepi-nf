@@ -33,22 +33,22 @@
         },
         "fasta": {
           "type": "string",
-          "title": "FASTA",
-          "description": "Aligned FASTA file",
+          "title": "Optional FASTA",
+          "description": "By default the pipeline downloads sequences from pathoplexus. Alternatively user can provide a FASTA file",
           "help_text": "Pre-aligned from Pathoplexus, or unaligned if using --mafft. If unset, sequences are downloaded from Pathoplexus.",
           "format": "file-path"
         },
         "mafft": {
           "type": "boolean",
           "title": "Run MAFFT",
-          "description": "Align sequences with MAFFT before cleaning",
+          "description": "Align sequences with MAFFT before cleaning. Not needed for pre-aligned Pathoplexus sequences",
           "help_text": "Not needed for pre-aligned Pathoplexus sequences",
           "default": false
         },
         "metadata": {
           "type": "string",
-          "title": "Metadata",
-          "description": "Pathoplexus metadata TSV",
+          "title": "Optional Metadata",
+          "description": "If using own fasta file, this metadata TSV should be in the same format as provided by Pathoplexus",
           "help_text": "Required when --fasta is given.",
           "format": "file-path"
         },
@@ -94,6 +94,12 @@
           "type": "string",
           "title": "Minimum date",
           "description": "Remove sequences dated before this (YYYY-MM-DD)",
+          "help_text": "Sequences from the same year but before this date are flagged."
+        },
+        "max_date": {
+          "type": "string",
+          "title": "Maximum date",
+          "description": "Remove sequences dated after this (YYYY-MM-DD)",
           "help_text": "Sequences from the same year but before this date are flagged."
         },
         "model": {

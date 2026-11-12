@@ -108,6 +108,7 @@ mamba run -n bdbv python bin/run.py \
 | `--linelist` | INRB linelist Excel file (enables duplicate resolution and mismatch checking) |
 | `--exclude` | Manual exclude list (default: `data/exclude.txt`) |
 | `--min-date` | Earliest collection date to download (default: `2025-01-01`) |
+| `--max-date` | Latest collection date to download (default: no upper limit) |
 | `--adar-mode` | `mask` (default), `exclude_tc`, or `exclude_all` |
 | `--skip-download` | Use existing files in `--outdir` |
 | `--skip-pipeline` | Skip pipeline step |
@@ -196,6 +197,7 @@ python bin/download_pathoplexus.py --scope drc -o /path/to/output/dir
 | `--scope` | `drc` (consortium only, filters to `Pathogen Genomic Lab` group), `outbreak` (all groups, all outbreak countries: DRC, Kenya, Nigeria, Uganda), or comma-separated country list |
 | `-o` | Output directory |
 | `--min-date` | Earliest collection date (default: `2025-01-01`) |
+| `--max-date` | Latest collection date (default: no upper limit) |
 | `--organism` | Pathoplexus organism slug (default: `ebola-bdbv`) |
 
 **When to use standalone:** Testing download without running the full pipeline, or downloading for a custom scope.

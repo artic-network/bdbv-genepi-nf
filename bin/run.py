@@ -41,6 +41,8 @@ class RunLog:
             self._write(f'Model:   {args.model}')
         if args.min_date:
             self._write(f'Min date: {args.min_date}')
+        if hasattr(args, 'max_date') and args.max_date:
+            self._write(f'Max date: {args.max_date}')
         if hasattr(args, 'mask_sites') and args.mask_sites:
             self._write(f'Mask sites: {args.mask_sites}')
         if hasattr(args, 'mask_sites_file') and args.mask_sites_file:
@@ -209,6 +211,8 @@ def main():
                         help='Download scope: drc, outbreak, or comma-separated countries (default: drc)')
     parser.add_argument('--min-date', default='2025-01-01',
                         help='Earliest collection date to download (default: 2025-01-01)')
+    parser.add_argument('--max-date', default=None,
+                        help='Latest collection date to download (default: no upper limit)')
 
     # Notification
     parser.add_argument('--slack-webhook', default=None, help='Slack webhook URL for notifications')
@@ -231,7 +235,8 @@ def main():
         download_script = SCRIPTS_DIR / 'download_pathoplexus.py'
         stdout = run(
             f'{PYTHON} {download_script} -o {outdir} --organism {args.organism}'
-            f' --scope {args.scope} --min-date {args.min_date}',
+            f' --scope {args.scope} --min-date {args.min_date}'
+            f'{f" --max-date {args.max_date}" if args.max_date else ""}',
             'Downloading from Pathoplexus',
             capture=True
         )
@@ -239,7 +244,10 @@ def main():
         paths = json.loads(stdout.strip().split('\n')[-1])
         fasta_path = paths['fasta']
         metadata_path = paths['metadata']
-        rlog.log(f'Downloaded from Pathoplexus (scope={args.scope}, min-date={args.min_date})')
+        date_range = f'min-date={args.min_date}'
+        if args.max_date:
+            date_range += f', max-date={args.max_date}'
+        rlog.log(f'Downloaded from Pathoplexus (scope={args.scope}, {date_range})')
     else:
         fasta_files = sorted(outdir.glob(f'{args.organism}_aligned-nuc_*.fasta'))
         metadata_files = sorted(outdir.glob(f'{args.organism}_metadata_*.tsv'))

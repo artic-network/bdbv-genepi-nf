@@ -59,6 +59,7 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--run_name` | Label used in the default prefix and download file names (default: today, `YYYYMMDD`) |
 | `--fasta`, `--metadata` | Use these instead of downloading |
 | `--scope`, `--organism` | Download scope (`drc`, `drc,kenya`, `outbreak`) and LAPIS organism |
+| `--max_date` | Latest collection date to download (`YYYY-MM-DD`; default no upper limit) |
 | `--mafft` | Run MAFFT before cleaning |
 | `--min_date` | Remove sequences dated before this (`YYYY-MM-DD`) |
 | `--trim_start`, `--trim_end` | Alignment positions to keep, 1-based inclusive (default `47` and `18851`) |

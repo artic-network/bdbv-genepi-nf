@@ -138,6 +138,7 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 | `--mafft` | Align sequences with MAFFT before cleaning | `false` |
 | `--organism` | LAPIS organism slug used for download | `ebola-bdbv` |
 | `--scope` | Countries to download: `drc`, a comma-separated list such as `drc,kenya`, or `outbreak` | `drc` |
+| `--max_date` | Latest collection date to download (`YYYY-MM-DD`). Only used when downloading | no upper limit |
 | `--previous_data` | Previous run folder to compare against in health checks. Health checks are skipped when unset | |
 
 ### Output options

@@ -2,6 +2,7 @@ observed_name,canonical_nom,source,mismatch_reason,notes
 Mongwalu,Mongbwalu,fasta,,Header spelling variant (Ituri_2026-06-30 export)
 Mongbalu,Mongbwalu,fasta,,Alternate spelling in FASTA headers
 Mungwalu,Mongbwalu,fasta,,Alternate transcription in FASTA headers
+Mungbwalu,Mongbwalu,fasta,,Alternate transcription in FASTA headers
 Mongbwalu,Mongbwalu,fasta,,Direct match to shapefile
 Gethy,Gety,fasta,,Alternate spelling in FASTA headers
 Gety,Gety,fasta,,Direct match to shapefile
@@ -51,7 +52,9 @@ Nia-Nia,Nia Nia,sitrep,,Sitrep hyphen variant
 Makiso-Kisangani,Makiso Kisangani,sitrep,,Sitrep hyphen variant
 Miti-Murhesa,Miti Murhesa,sitrep,,Sitrep hyphen variant
 Gethy,Gety,sitrep,,Sitrep spelling variant (also aliased for fasta)
-Lubunga,Lubunga (Tshopo),sitrep,,Sitrep missing province qualifier
+Lubunga,Lubunga_Tshopo,sitrep,,Sitrep missing province qualifier; parens removed for Newick compatibility
+Lubunga (Tshopo),Lubunga_Tshopo,fasta,,Province-qualified name with parens; canonical form uses underscore
+Lubunga-(Tshopo),Lubunga_Tshopo,fasta,,Hyphen+parens variant in FASTA headers; canonical form uses underscore
 BAMBU,Bambu,linelist,,Linelist uppercase variant
 LITA,Lita,linelist,,Linelist uppercase variant
 Nyakunde,Nyankunde,linelist,,Linelist spelling variant (reversed from fasta alias direction)
@@ -61,3 +64,7 @@ Gemena,Gemena,fasta,,Direct match to MoH health zone (Sud-Ubangi)
 Kabondo,Kabondo,fasta,,Direct match to MoH health zone (Tshopo)
 Lolwa,Lolwa,fasta,,Direct match to MoH health zone (Tshopo)
 Mangobo,Mangobo,fasta,,Direct match to MoH health zone (Tshopo)
+Pawa,Pawa,fasta,,Direct match to MoH health zone
+Wamba,Wamba,fasta,,Direct match to MoH health zone
+Boma-Mangbetu,Boma Mangbetu,fasta,,Hyphen variant
+Isiro,Isiro,fasta,,Direct match to MoH health zone

@@ -116,6 +116,10 @@ def main():
         help="Earliest collection date to include (default: 2025-01-01)"
     )
     parser.add_argument(
+        "--max-date", default=None,
+        help="Latest collection date to include (default: no upper limit)"
+    )
+    parser.add_argument(
         "--metadata-only", action="store_true",
         help="Download only metadata, skip sequences"
     )
@@ -143,6 +147,8 @@ def main():
         print(f"\n--- {country_name} ---")
         filters = {"geoLocCountry": country_name,
                    "sampleCollectionDateRangeLowerFrom": args.min_date}
+        if args.max_date:
+            filters["sampleCollectionDateRangeUpperTo"] = args.max_date
         if countries == ["drc"] and args.group:
             filters["groupName"] = args.group
 

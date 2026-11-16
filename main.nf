@@ -106,14 +106,14 @@ workflow.onComplete {
   if ( !workflow.success )
       return
   def adar_tag = params.adar_mode == 'mask' ? 'ADAR_masked' : 'ADAR_excluded'
-  def outliers = "${params.outdir}/08_temporal_root/${params.prefix}.${adar_tag}.outliers.txt"
+  def outliers = "${params.outdir}/06_temporal_root/${params.prefix}.${adar_tag}.outliers.txt"
   if ( params.outlier_removal_threshold == null && !params.outlier_file ) {
       log.info """
       ==========================================================================
       Stopped after temporal rooting for outlier review
       (no --outlier_removal_threshold or --outlier_file given).
 
-      1. Review the RTT plot and detected outliers in ${params.outdir}/08_temporal_root/
+      1. Review the RTT plot and detected outliers in ${params.outdir}/06_temporal_root/
       2. Edit a copy of: ${outliers}
       3. Resume, passing your edited file:
 

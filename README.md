@@ -41,25 +41,24 @@ flowchart LR
 
 ## Output files
 
-All outputs are written under `--outdir`, one numbered folder per step, in the order of the main flow:
+All outputs are written under `--outdir`, one folder per step, numbered in the order of the main flow (`to_review/` and `execution/` are not numbered):
 
 | Folder | Contents |
 |--------|----------|
 | `00_download/` | Pathoplexus FASTA and metadata |
-| `01_clean/` | Cleaned alignment and cleaning log |
-| `02_to_review/` | QC reports (`qc_report_basic.txt`, `qc_report_phylo.txt`), `missing_aliases.txt`, and with `--linelist` the metadata quality report, `exclude_auto.txt` and `non_consortium_sequences.csv`. Also `exclude_merged.txt` |
-| `03_intermediates/` | MAFFT alignment (only with `--mafft`) and the pre-filtered alignment |
-| `04_iqtree_initial/` | First tree, ancestral states and best-fit model |
-| `05_raccoon/` | raccoon ADAR identification outputs |
-| `06_adar/` | ADAR-masked (or ADAR-excluded) alignment and ADAR report |
-| `07_iqtree_adar/` | Tree rebuilt on the ADAR-handled alignment |
-| `08_temporal_root/` | Rooted tree, RTT plot and detected outliers (`outliers.txt` when auto-removed) |
-| `09_final/` | Final alignment, ML tree with aBayes support and temporally rooted tree |
-| `10_health_checks/` | Health check report, run comparison and suggested exclusions and retractions (update runs) |
+| `01_clean/` | The alignments before tree building: MAFFT alignment (only with `--mafft`), cleaned alignment with its log, and the pre-filtered alignment (after exclusions) |
+| `02_iqtree_initial/` | First tree, ancestral states and best-fit model |
+| `03_raccoon/` | raccoon ADAR identification outputs |
+| `04_adar/` | ADAR-masked (or ADAR-excluded) alignment and ADAR report |
+| `05_iqtree_adar/` | Tree rebuilt on the ADAR-handled alignment |
+| `06_temporal_root/` | Rooted tree, RTT plot and detected outliers (`outliers.txt` when auto-removed) |
+| `07_final/` | Final alignment, ML tree with aBayes support and temporally rooted tree |
+| `08_health_checks/` | Health check report, run comparison and suggested exclusions and retractions (update runs) |
+| `to_review/` | Things to look at, not numbered: QC reports (`qc_report_basic.txt`, `qc_report_phylo.txt`), `missing_aliases.txt`, and with `--linelist` the metadata quality report, `exclude_auto.txt` and `non_consortium_sequences.csv`. Also `exclude_merged.txt` |
 | `execution/` | Nextflow timeline, report and trace |
 | `<prefix>.run_log.txt` | Run log: the command, parameters and outcome, followed by the screen output of every step in order. Written whether the run succeeds or fails |
 
-`02_to_review/missing_aliases.txt` is only written when the cleaning step finds `admin2` locations that are not in `data/aliases.csv`. Add them to the aliases file and rerun.
+`to_review/missing_aliases.txt` is only written when the cleaning step finds `admin2` locations that are not in `data/aliases.csv`. Add them to the aliases file and rerun.
 
 ## Parameters
 
@@ -121,7 +120,7 @@ These are available, but the presets are recommended.
 
 ## Data files
 
-- **`data/aliases.csv`** — maps observed `admin2` location names to canonical names. Update it periodically as new sequences with novel location spellings are submitted (the pipeline lists any it does not recognise in `02_to_review/missing_aliases.txt`).
+- **`data/aliases.csv`** — maps observed `admin2` location names to canonical names. Update it periodically as new sequences with novel location spellings are submitted (the pipeline lists any it does not recognise in `to_review/missing_aliases.txt`).
 - **`data/exclude.txt`** — accessions to always exclude from analysis (e.g. non-consortium sequences). `data/exclusion_log.tsv` records why sequences were excluded.
 - **`data/mask_sites.txt`** — alignment positions currently masked, and why. It is used by default (`--mask_sites_file`).
 - **`data/exclude_pending.txt`** — accessions temporarily excluded while under review (e.g. flagged `duplicate_sample` by the health checks).
@@ -183,10 +182,10 @@ nextflow run . \
     --outlier_removal_threshold 3
 ```
 
-The reports are written to `10_health_checks/health_check_report.txt` and `10_health_checks/run_comparison.txt`. Unlike the Python `bin/run.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
+The reports are written to `08_health_checks/health_check_report.txt` and `08_health_checks/run_comparison.txt`. Unlike the Python `bin/run.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
 
-- `10_health_checks/exclude_pending.additions.txt` — new `duplicate_sample` flags to add to `data/exclude_pending.txt`
-- `10_health_checks/retractions.additions.txt` — retracted accessions to add to your `retractions.txt`
+- `08_health_checks/exclude_pending.additions.txt` — new `duplicate_sample` flags to add to `data/exclude_pending.txt`
+- `08_health_checks/retractions.additions.txt` — retracted accessions to add to your `retractions.txt`
 
 ### Manual review points and resuming
 
@@ -194,11 +193,11 @@ There is a place where you may want to stop and review before continuing. The pi
 
 > **Resuming on a later day:** `--run_name` defaults to today's date, so a resume the next day changes the prefix and reruns cached steps. Set `--run_name` explicitly (e.g. `--run_name 20261026`) on every command for a run you plan to resume, and keep the same `--outdir` and input parameters.
 
-**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `08_temporal_root/`, copy the outliers file and edit the copy, then resume with it:
+**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `06_temporal_root/`, copy the outliers file and edit the copy, then resume with it:
 
 ```bash
 nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
 ```
 
-Health checks (update runs) are the final step. Review `10_health_checks/health_check_report.txt` and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt`; the tree steps rerun because the input of `pre_filter` has changed.
+Health checks (update runs) are the final step. Review `08_health_checks/health_check_report.txt` and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt`; the tree steps rerun because the input of `pre_filter` has changed.
 

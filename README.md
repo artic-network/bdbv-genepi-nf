@@ -74,6 +74,7 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 | `--organism` | LAPIS organism slug used for download | `ebola-bdbv` |
 | `--scope` | Countries to download: `drc`, a comma-separated list such as `drc,kenya`, or `outbreak` | `drc` |
 | `--max_date` | Latest collection date to download (`YYYY-MM-DD`). Only used when downloading | no upper limit |
+| `--pathoplexus_filters` | Extra Pathoplexus filters as free text, e.g. `geoLocAdmin1=Ituri&completenessFrom=0.9`. Only used when downloading. See [Filtering the Pathoplexus download](#filtering-the-pathoplexus-download) | |
 | `--previous_data` | Previous run folder to compare against in health checks. Health checks are skipped when unset | |
 
 ### Output options
@@ -168,6 +169,29 @@ To use files you have already downloaded, add `--fasta data/YYYYMMDD/aligned.fas
 - `drc` — DRC sequences only (applies the Pathogen Genomic Lab group filter)
 - `drc,kenya` — DRC + Kenya
 - `outbreak` — all current outbreak countries (DRC, Kenya, Uganda)
+
+### Filtering the Pathoplexus download
+
+`--pathoplexus_filters` adds your own filters to the download. It is free text, written like the query string of a Pathoplexus URL: `field=value`, with `&` between filters. The filters apply to both the metadata and the sequences, and only when downloading (not with `--fasta`).
+
+```bash
+--pathoplexus_filters "geoLocAdmin1=Ituri&completenessFrom=0.9"
+```
+
+| Write | Meaning | Example |
+|-------|---------|---------|
+| `field=value` | Exact match (case-sensitive) | `geoLocAdmin1=Ituri` |
+| `field=a&field=b` | Either value | `geoLocAdmin1=Ituri&geoLocAdmin1=Tshopo` |
+| `fieldFrom=n`, `fieldTo=n` | At least / at most (numbers) | `completenessFrom=0.9`, `totalAmbiguousNucsTo=100` |
+| `field.regex=pattern` | Regular expression | `geoLocAdmin2.regex=^Bun` |
+| `field.isNull=true` or `false` | Is empty / is not empty | `groupName.isNull=false` |
+
+- **Fields** are Pathoplexus metadata fields, with the exact capitalisation, for example `geoLocAdmin1`, `geoLocAdmin2`, `hostNameScientific`, `groupName`, `submitter`, `length`, `completeness`, `totalAmbiguousNucs`, `sequencingDate`. The full list is in the [Pathoplexus API reference](https://lapis.pathoplexus.org/ebola-bdbv/api-docs). A misspelt field stops the run straight away and Pathoplexus says which one it did not recognise.
+- **Collection dates** use `sampleCollectionDateRangeLowerFrom=YYYY-MM-DD` (not before) and `sampleCollectionDateRangeUpperTo=YYYY-MM-DD` (not after). The same as `--max_date`, which a filter overrides.
+- **Built-in filters:** your filter replaces the built-in one of the same name. A `--scope drc` download is limited to the `Pathogen Genomic Lab` group, and any `groupName` filter replaces that, so `groupName.isNull=false` means all groups.
+- **Countries:** use `--scope`. `geoLocCountry` is not accepted here. The output-format filters (`dataFormat`, `fields`, `limit`, `offset`, `orderBy`) are not accepted either.
+- **Spaces** are fine (`hostNameScientific=Homo sapiens`). To include a literal `+`, `&` or `%` in a value, write it as `%2B`, `%26` or `%25`. A filter can be put on a new line instead of using `&`.
+- Pasting the part of a Pathoplexus search URL after the `?` works.
 
 Output file names start with `--prefix`, which defaults to `bdbv_<run_name>` (for example `bdbv_20261026`). `--run_name` defaults to today's date, `YYYYMMDD`.
 

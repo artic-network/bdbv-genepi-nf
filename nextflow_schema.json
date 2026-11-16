@@ -96,6 +96,12 @@
           "description": "Remove sequences dated after this (YYYY-MM-DD)",
           "help_text": "Sequences from the same year but before this date are flagged."
         },
+        "pathoplexus_filters": {
+          "type": "string",
+          "title": "Pathoplexus filters",
+          "description": "Optional extra filters for the Pathoplexus download, written like a URL query string: field=value, with & between filters",
+          "help_text": "Example: geoLocAdmin1=Ituri&completenessFrom=0.9\n\nfield=value is an exact, case-sensitive match. Repeat a field for either value (geoLocAdmin1=Ituri&geoLocAdmin1=Tshopo). fieldFrom=n and fieldTo=n give a range (completenessFrom=0.9). field.regex=pattern is a regular expression and field.isNull=false means not empty. Collection dates use sampleCollectionDateRangeLowerFrom=YYYY-MM-DD and sampleCollectionDateRangeUpperTo=YYYY-MM-DD. Spaces are fine (hostNameScientific=Homo sapiens).\n\nField names are Pathoplexus metadata fields with exact capitalisation, listed at https://lapis.pathoplexus.org/ebola-bdbv/api-docs. A misspelt field stops the run at once. A filter replaces the built-in one of the same name; any groupName filter replaces the default Pathogen Genomic Lab restriction. Use the scope option for countries. Only used when downloading."
+        },
         "model": {
           "type": "string",
           "title": "Substitution model",

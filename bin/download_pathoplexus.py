@@ -6,9 +6,9 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, parse_qsl
 from urllib.request import urlopen, Request
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 import pandas as pd
 
@@ -35,11 +35,29 @@ METADATA_FIELDS = [
 ]
 
 
+def api_error_detail(e):
+    """The message LAPIS returns with an HTTP error (for a bad filter it names the problem)."""
+    try:
+        detail = json.loads(e.read().decode("utf-8"))["error"]["detail"]
+    except Exception:
+        return ""
+    # for an unknown filter LAPIS lists every valid key: keep the useful first part
+    return detail.split(" Valid keys are:")[0]
+
+
 def fetch_url(url, timeout=120):
     req = Request(url, headers={"Accept": "*/*"})
     try:
         with urlopen(req, timeout=timeout) as resp:
             return resp.read().decode("utf-8")
+    except HTTPError as e:
+        print(f"Error fetching {url}: {e}", file=sys.stderr)
+        detail = api_error_detail(e)
+        if detail:
+            print(f"  Pathoplexus said: {detail}", file=sys.stderr)
+            print("  Check --filters: field names are case-sensitive metadata fields, "
+                  "see https://lapis.pathoplexus.org/ebola-bdbv/api-docs", file=sys.stderr)
+        sys.exit(1)
     except URLError as e:
         print(f"Error fetching {url}: {e}", file=sys.stderr)
         sys.exit(1)
@@ -74,6 +92,61 @@ def download_sequences(organism, outpath, filters=None):
     n_seqs = fasta.count("\n>") + (1 if fasta.startswith(">") else 0)
     print(f"  → {n_seqs} sequences, saved to {outpath}")
     return n_seqs
+
+
+# Filters that would change the output format or the country handling, so they are not accepted in --filters
+RESERVED_FILTERS = {
+    "dataFormat": "the output format is set by this script",
+    "fields": "the metadata fields are set by this script",
+    "limit": "all matching sequences are downloaded",
+    "offset": "all matching sequences are downloaded",
+    "orderBy": "ordering is not used",
+    "downloadAsFile": "the output is handled by this script",
+    "compression": "the output is handled by this script",
+    "geoLocCountry": "use --scope to choose countries",
+}
+
+
+def parse_filters(text):
+    """Parse extra Pathoplexus (LAPIS) filters written like a URL query string.
+
+    'geoLocAdmin1=Ituri&hostNameScientific=Homo sapiens&lengthFrom=15000'. Separate filters with & (or
+    a new line). A repeated key means either value. Values are percent-decoded and + is a space, so
+    the query string of a Pathoplexus URL can be pasted. Returns a dict of key -> list of values.
+    """
+    filters = {}
+    if not text:
+        return filters
+    for chunk in text.replace("\r", "\n").replace("\n", "&").split("&"):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if "=" not in chunk:
+            print(f"ERROR: could not read filter '{chunk}': expected key=value, "
+                  f"e.g. geoLocAdmin1=Ituri", file=sys.stderr)
+            sys.exit(1)
+        for key, value in parse_qsl(chunk, keep_blank_values=True):
+            key = key.strip()
+            value = value.strip()
+            if not key or value == "":
+                print(f"ERROR: filter '{chunk}' needs both a name and a value", file=sys.stderr)
+                sys.exit(1)
+            if key in RESERVED_FILTERS:
+                print(f"ERROR: filter '{key}' is not allowed in --filters ({RESERVED_FILTERS[key]})",
+                      file=sys.stderr)
+                sys.exit(1)
+            filters.setdefault(key, []).append(value)
+    return filters
+
+
+def merge_filters(base, extra):
+    """Add the user's filters to the built-in ones. A user filter replaces the built-in one of the
+    same name, and any groupName filter replaces the default group restriction."""
+    merged = dict(base)
+    if any(k == "groupName" or k.startswith("groupName.") for k in extra):
+        merged.pop("groupName", None)
+    merged.update(extra)
+    return merged
 
 
 def parse_scope(scope_str):
@@ -120,6 +193,12 @@ def main():
         help="Latest collection date to include (default: no upper limit)"
     )
     parser.add_argument(
+        "--filters", default=None,
+        help="Extra Pathoplexus filters as a URL query string, e.g. "
+             "'geoLocAdmin1=Ituri&lengthFrom=15000'. Applied to the metadata and the sequences. "
+             "A filter replaces the built-in one of the same name"
+    )
+    parser.add_argument(
         "--metadata-only", action="store_true",
         help="Download only metadata, skip sequences"
     )
@@ -130,6 +209,9 @@ def main():
     args = parser.parse_args()
 
     countries = parse_scope(args.scope)
+    extra_filters = parse_filters(args.filters)
+    if extra_filters:
+        print("Extra filters: " + "&".join(f"{k}={v}" for k, vs in extra_filters.items() for v in vs))
 
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%dT%H%M")
@@ -151,6 +233,7 @@ def main():
             filters["sampleCollectionDateRangeUpperTo"] = args.max_date
         if countries == ["drc"] and args.group:
             filters["groupName"] = args.group
+        filters = merge_filters(filters, extra_filters)
 
         if not args.sequences_only:
             meta_path = args.outdir / f"{country_key}_metadata.tsv"

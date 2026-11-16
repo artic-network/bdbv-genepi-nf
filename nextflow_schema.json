@@ -186,6 +186,14 @@
           "minimum": 1,
           "help_text": "A machine with fewer CPUs than this uses all of them, so a small machine is not over-subscribed and a large one is used fully. Inside Docker the limit follows what the container is allowed (the CPUs given to Docker Desktop, or a --cpus / --cpuset-cpus limit), not just what the machine has. IQ-TREE tests thread counts up to this limit and keeps the fastest. Results from the same seed can differ slightly between machines that use different numbers of threads; set this to a fixed value (for example 4) if you need identical settings everywhere."
         },
+        "container_platform": {
+          "type": "string",
+          "title": "Docker image platform",
+          "description": "Which build of the Docker image to run. Leave on auto unless you have a reason to change it",
+          "default": "auto",
+          "enum": ["auto", "native", "linux/amd64", "linux/arm64"],
+          "help_text": "auto runs the amd64 image on Apple Silicon Macs, where it is faster than the native arm64 build (IQ-TREE's arm64 build uses a slower kernel); every other machine runs its native image. This needs Rosetta emulation turned on in Docker Desktop (Settings > General > 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon'); without it the amd64 image runs under much slower emulation, and you should choose native. native always uses the image for the machine's own architecture. Only applies to Docker runs."
+        },
         "aliases_file": {
           "type": "string",
           "title": "Aliases file",

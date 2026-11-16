@@ -24,3 +24,21 @@ process health_checks {
     fi
     """
 }
+
+// Compares this run with the previous one (sequence counts, exclusions, outliers, RTT, ADAR)
+process compare_runs {
+
+  input:
+    path current_files, stageAs: "current/*"
+    path metadata, stageAs: "current/bdbv_metadata_current.tsv"
+    path previous, stageAs: "previous"
+
+  output:
+    path "run_comparison.txt"
+
+  script:
+    """
+    compare_runs.py --current current --previous previous --prefix ${params.prefix} \
+        --adar-mode ${params.adar_mode} -o run_comparison.txt
+    """
+}

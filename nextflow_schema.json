@@ -202,6 +202,26 @@
           "description": "File with 1-based positions to mask, one per line (# comments allowed)",
           "format": "file-path",
           "help_text": "Defaults to data/mask_sites.txt. Use `false` to mask no sites."
+        },
+        "linelist": {
+          "type": "string",
+          "title": "INRB linelist",
+          "description": "INRB linelist Excel file. Enables the metadata quality report, duplicate resolution and linelist mismatch checks",
+          "help_text": "Needs the Pathoplexus ID and Sample ID columns. Automatic exclusions from the report (resolved duplicates, quality failures) are applied in the pre-filter.",
+          "format": "file-path"
+        },
+        "hz_lookup": {
+          "type": "string",
+          "title": "Health zone lookup",
+          "description": "Health area/zone/province CSV used by the metadata quality report to detect province names",
+          "help_text": "Defaults to data/health_area_zone_province_slim.csv. Use `false` to skip.",
+          "format": "file-path"
+        },
+        "slack_webhook": {
+          "type": "string",
+          "title": "Slack webhook URL",
+          "description": "Slack incoming webhook to notify when the run finishes or fails",
+          "help_text": "Defaults to the SLACK_WEBHOOK_URL environment variable. Prefer the environment variable so the URL is not on the command line. The URL is never written to the run log."
         }
       }
     },

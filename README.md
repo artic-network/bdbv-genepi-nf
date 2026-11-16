@@ -16,22 +16,25 @@ The pipeline works through the following stages:
 2. **Align** *(`mafft`, optional, `--mafft`)* — [MAFFT](https://mafft.cbrc.jp/alignment/software/) alignment, only needed for unaligned input. Pathoplexus sequences are already aligned.
 3. **Clean** *(`clean`)* — rename headers, trim, mask any specified sites (`--mask_sites`), deduplicate versions, standardise locations using the aliases file and apply the date filter.
 4. **Basic QC** *(`qc_basic`)* — genome-level QC report.
-5. **Pre-filter** *(`pre_filter`)* — remove sequences in the manual and pending exclusion lists.
-6. **Initial tree** *(`iqtree_ancestral`)* — [IQ-TREE](http://www.iqtree.org/) ML tree with ModelFinder (or a fixed `--model`) and ancestral state reconstruction.
-7. **ADAR identification** *(`raccoon`)* — identify ADAR-edited sites with [raccoon](https://github.com/artic-network/raccoon).
-8. **ADAR handling** *(`adar_mask`)* — mask the ADAR sites, or exclude affected genomes (`--adar_mode`).
-9. **Phylogenetic QC** *(`qc_phylo`)* — phylogeny-based QC report.
-10. **Rebuild tree** *(`iqtree_adar`)* — IQ-TREE on the ADAR-handled alignment, using the model found in step 6.
-11. **Temporal rooting** *(`temporal_root`)* — best-fitting temporal root and outlier detection (**review point 1**).
-12. **Outlier removal** *(`select_outliers`, `filter_outliers`)* — remove temporal outliers, either automatically or from a file you have reviewed (**review point 1**).
-13. **Final tree** *(`iqtree_final`, `final_root`)* — final ML tree with aBayes branch support, temporally rooted.
-14. **Health checks** *(`health_checks`, update runs only)* — compare with a previous dataset and flag problem genomes (update runs only).
+5. **Metadata quality report** *(`metadata_quality_report`, with `--linelist`)* — check the Pathoplexus metadata against the INRB linelist: resolve duplicates, flag date and location mismatches and quality failures, list non-consortium sequences. Writes an automatic exclusion list (`exclude_auto.txt`).
+6. **Pre-filter** *(`pre_filter`)* — remove sequences in the manual, automatic and pending exclusion lists. The manual and automatic lists are also saved merged as `exclude_merged.txt`.
+7. **Initial tree** *(`iqtree_ancestral`)* — [IQ-TREE](http://www.iqtree.org/) ML tree with ModelFinder (or a fixed `--model`) and ancestral state reconstruction.
+8. **ADAR identification** *(`raccoon`)* — identify ADAR-edited sites with [raccoon](https://github.com/artic-network/raccoon).
+9. **ADAR handling** *(`adar_mask`)* — mask the ADAR sites, or exclude affected genomes (`--adar_mode`).
+10. **Phylogenetic QC** *(`qc_phylo`)* — phylogeny-based QC report.
+11. **Rebuild tree** *(`iqtree_adar`)* — IQ-TREE on the ADAR-handled alignment, using the model found in step 7.
+12. **Temporal rooting** *(`temporal_root`)* — best-fitting temporal root and outlier detection (**review point 1**).
+13. **Outlier removal** *(`select_outliers`, `filter_outliers`)* — remove temporal outliers, either automatically or from a file you have reviewed (**review point 1**).
+14. **Final tree** *(`iqtree_final`, `final_root`)* — final ML tree with aBayes branch support, temporally rooted.
+15. **Health checks** *(`health_checks`, update runs only)* — compare with a previous dataset and flag problem genomes; a run comparison (`compare_runs`) summarises what changed.
 
 ```mermaid
 flowchart LR
     D[download] --> C[clean] --> F[pre_filter] --> I1[iqtree_ancestral] --> R[raccoon] --> A[adar_mask] --> I2[iqtree_adar] --> T[temporal_root]
     T --> O{{review point 1:<br/>outliers}} --> FO[filter_outliers] --> I3[iqtree_final] --> FR[final_root]
     I3 --> H[health_checks]
+    I3 --> CR[compare_runs]
+    D -.-> MQ[metadata_quality_report<br/>with --linelist] -.-> F
     C --> Q[qc_basic]
     R --> QP[qc_phylo]
 ```
@@ -44,14 +47,14 @@ All outputs are written under `--outdir`, one folder per step:
 |--------|----------|
 | `download/` | Pathoplexus FASTA and metadata |
 | `clean/` | Cleaned alignment and cleaning log |
-| `to_review/` | QC reports (`qc_report_basic.txt`, `qc_report_phylo.txt`) and `missing_aliases.txt` |
+| `to_review/` | QC reports (`qc_report_basic.txt`, `qc_report_phylo.txt`), `missing_aliases.txt`, and with `--linelist` the metadata quality report, `exclude_auto.txt` and `non_consortium_sequences.csv`. Also `exclude_merged.txt` |
 | `iqtree_initial/` | First tree, ancestral states and best-fit model |
 | `raccoon/` | raccoon ADAR identification outputs |
 | `adar/` | ADAR-masked (or ADAR-excluded) alignment and ADAR report |
 | `iqtree_adar/` | Tree rebuilt on the ADAR-handled alignment |
 | `temporal_root/` | Rooted tree, RTT plot and detected outliers (`outliers.txt` when auto-removed) |
 | `final/` | Final alignment, ML tree with aBayes support and temporally rooted tree |
-| `health_checks/` | Health check report and suggested exclusions and retractions (update runs) |
+| `health_checks/` | Health check report, run comparison and suggested exclusions and retractions (update runs) |
 | `intermediates/` | MAFFT and pre-filtered alignments (on by default; turn off with `--output_intermediates false`) |
 | `execution/` | Nextflow timeline, report and trace |
 | `<prefix>.run_log.txt` | Run log: the command, parameters and outcome, followed by the screen output of every step in order. Written whether the run succeeds or fails |
@@ -112,6 +115,9 @@ These are available, but the presets are recommended.
 | `--mask_sites` | Comma-separated 1-based positions to mask to N (e.g. `5246,5249,5251`) | |
 | `--mask_sites_file` | File of 1-based positions to mask, one per line (`#` comments allowed). Use `--mask_sites_file false` to mask none | `data/mask_sites.txt` |
 | `--exclude_file` | Accessions to always exclude from analysis | `data/exclude.txt` |
+| `--linelist` | INRB linelist Excel file (Pathoplexus ID and Sample ID columns). Turns on the metadata quality report, duplicate resolution, linelist mismatch checks and automatic exclusions | |
+| `--hz_lookup` | Health area/zone/province CSV used to detect province names in the quality report. Use `--hz_lookup false` to skip | `data/health_area_zone_province_slim.csv` |
+| `--slack_webhook` | Slack incoming webhook; posts a summary when the run finishes or fails. Prefer setting the `SLACK_WEBHOOK_URL` environment variable so the URL is not on the command line. It is never written to the run log | `$SLACK_WEBHOOK_URL` |
 | `--exclude_pending` | Accessions temporarily excluded while under review | `data/exclude_pending.txt` |
 
 ## Data files
@@ -178,7 +184,7 @@ nextflow run . \
     --outlier_removal_threshold 3
 ```
 
-The report is written to `health_checks/health_check_report.txt`. Unlike the Python `bin/run.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
+The reports are written to `health_checks/health_check_report.txt` and `health_checks/run_comparison.txt`. Unlike the Python `bin/run.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
 
 - `health_checks/exclude_pending.additions.txt` — new `duplicate_sample` flags to add to `data/exclude_pending.txt`
 - `health_checks/retractions.additions.txt` — retracted accessions to add to your `retractions.txt`

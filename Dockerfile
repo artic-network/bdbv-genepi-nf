@@ -18,7 +18,9 @@ RUN apt-get update \
 COPY --from=build /opt/env /opt/env
 COPY bin/ /opt/bdbv-pipeline/bin/
 
-ENV PATH=/opt/env/bin:/opt/bdbv-pipeline/bin:$PATH
+# bin/ is copied for standalone use (call scripts by full path). It is deliberately not on PATH:
+# Nextflow supplies the project's own bin/, which must not be shadowed by this copy.
+ENV PATH=/opt/env/bin:$PATH
 
 ENV MPLCONFIGDIR="."
 

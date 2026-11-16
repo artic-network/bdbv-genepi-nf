@@ -33,7 +33,7 @@ As the initial run, plus `--previous_data` to run health checks against the prev
 nextflow run . --outdir data/YYYYMMDD --previous_data data/YYYYMMDD_previous --outlier_removal_threshold 3
 ```
 
-The report is written to `health_check_report.txt`. Unlike `bin/run.py`, the pipeline does not edit files in `data/`. It writes suggested additions, which you review and merge yourself:
+The reports are written to `health_check_report.txt` and `run_comparison.txt`. Unlike `bin/run.py`, the pipeline does not edit files in `data/`. It writes suggested additions, which you review and merge yourself:
 
 - `exclude_pending.additions.txt` — new `duplicate_sample` flags to add to `data/exclude_pending.txt`
 - `retractions.additions.txt` — retracted accessions to add to your `retractions.txt`
@@ -66,6 +66,9 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--mask_sites`, `--mask_sites_file` | 1-based positions to mask to N (comma-separated list, or a file with one per line). The file defaults to `data/mask_sites.txt`; use `--mask_sites_file false` to mask none |
 | `--output_intermediates` | Publish intermediate alignments (default `true`; `--output_intermediates false` to skip) |
 | `--exclude_file`, `--exclude_pending` | Manual exclusions (default `data/exclude.txt`) and pending-review exclusions |
+| `--linelist` | INRB linelist Excel file: turns on the metadata quality report, duplicate resolution, mismatch checks and automatic exclusions (`to_review/exclude_auto.txt`) |
+| `--hz_lookup` | Health area/zone/province CSV for the quality report (default `data/health_area_zone_province_slim.csv`; `false` to skip) |
+| `--slack_webhook` | Slack webhook for a run summary. Prefer the `SLACK_WEBHOOK_URL` environment variable; the URL is never logged |
 | `--model` | Skip ModelFinder and use this model |
 | `--adar_mode` | `mask` (default), `exclude_tc` or `exclude_all` |
 | `--seed` | IQ-TREE seed (default 42) |

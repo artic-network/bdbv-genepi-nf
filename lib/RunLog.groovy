@@ -8,6 +8,11 @@ import nextflow.Nextflow
  */
 class RunLog {
 
+    /** Never write the Slack webhook URL (a secret) to the log. */
+    static String redact(String text) {
+        return text?.replaceAll(/(--slack_webhook[ =])\S+/, '$1<redacted>')
+    }
+
     static void write(workflow, Map params) {
         def outdir = params.outdir.toString()
         def trace = Nextflow.file("${outdir}/execution/trace.txt")
@@ -28,7 +33,7 @@ class RunLog {
         out << "Status:    ${workflow.success ? 'SUCCESS' : 'FAILED'}\n"
         if ( failed )
             out << "Failed:    ${failed.collect { "${it.name} (exit ${it.exit})" }.join(', ')}\n"
-        out << "Command:   ${workflow.commandLine}\n"
+        out << "Command:   ${redact(workflow.commandLine)}\n"
         out << "Output:    ${outdir}\n"
         out << "Prefix:    ${params.prefix}\n"
         out << "Pipeline:  ${workflow.manifest?.name ?: ''} ${workflow.revision ?: ''} (Nextflow ${workflow.nextflow.version})\n"
@@ -36,7 +41,7 @@ class RunLog {
         out << "\nParameters:\n"
         params.sort().each { k, v ->
             if ( v != null && !(v instanceof Map) && !(k in ['help', 'version', 'email', 'email_on_fail', 'plaintext_email',
-                    'monochrome_logs', 'hook_url', 'validate_params', 'show_hidden_params', 'schema_ignore_params']) )
+                    'monochrome_logs', 'hook_url', 'validate_params', 'show_hidden_params', 'schema_ignore_params', 'slack_webhook']) )
                 out << "  ${k}: ${v}\n"
         }
         out << "\n"

@@ -75,3 +75,47 @@ process filter_exclude {
     filter_exclude.py --input ${alignment} --output ${prefix}.aln --exclude-files ${exclude_files}
     """
 }
+
+// Checks the Pathoplexus metadata against the INRB linelist (duplicate resolution, date and
+// location mismatches) and lists accessions to exclude automatically. Only run with --linelist.
+process metadata_quality_report {
+
+  input:
+    path metadata
+    path fasta
+    path aliases
+    path linelist
+    path hz_lookup
+
+  output:
+    path "metadata_quality_report.txt", emit: report
+    path "metadata_quality_report.csv", emit: csv
+    path "exclude_auto.txt", emit: exclude_auto
+    path "non_consortium_sequences.csv", optional: true
+
+  script:
+    hz = params.hz_lookup ? "-s ${hz_lookup}" : ""
+    """
+    metadata_quality_report.py -m ${metadata} -f ${fasta} -a ${aliases} -l ${linelist} ${hz} \
+        -o metadata_quality_report.csv --exclude-out exclude_auto.txt \
+        --report-txt metadata_quality_report.txt --non-consortium-out non_consortium_sequences.csv
+    # the script only writes the exclude list when there is something to exclude
+    [ -f exclude_auto.txt ] || echo "# nothing to exclude automatically" > exclude_auto.txt
+    """
+}
+
+// Manual plus automatic exclusions as one deduplicated list (compare_runs reads it from each run)
+process merge_exclude {
+
+  input:
+    path exclude_files
+
+  output:
+    path "exclude_merged.txt"
+
+  script:
+    """
+    echo "# Merged exclude list (manual + auto)" > exclude_merged.txt
+    cat ${exclude_files} | grep -v '^[[:space:]]*#' | awk 'NF {print \$1}' | awk '!seen[\$0]++' >> exclude_merged.txt
+    """
+}

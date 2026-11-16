@@ -15,7 +15,7 @@ class SlackNotify {
         try {
             def lines = []
             lines << "BDBV pipeline ${workflow.success ? 'finished' : 'FAILED'}: ${params.outdir} (${params.prefix})".toString()
-            def health = Nextflow.file("${params.outdir}/health_checks/health_check_report.txt")
+            def health = Nextflow.file("${params.outdir}/11_health_checks/health_check_report.txt")
             if ( workflow.success && health.exists() ) {
                 def summary = health.text.readLines().findAll { it.trim() && !it.startsWith('=') }.take(20)
                 lines << '```' + summary.join('\n') + '```'

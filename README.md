@@ -99,7 +99,8 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `--outlier_file` | Reviewed outlier file; continues from outlier filtering (see [review point 1](#manual-review-points-and-resuming)) | |
+| `--outlier_file` | Reviewed outlier file; continues from outlier filtering (see [review point 1](#manual-review-points-and-resuming)). Use with `--resume_from` | |
+| `--resume_from` | Output folder of an earlier run that stopped for outlier review. Skips every step before outlier filtering. Use the same `--prefix` and `--adar_mode` as that run | |
 
 ### Additional options
 
@@ -213,15 +214,19 @@ The reports are written to `08_health_checks/health_check_report.txt` and `08_he
 
 ### Manual review points and resuming
 
-There is a place where you may want to stop and review before continuing. The pipeline stops and prints the command to resume at the end of the run. Resume with `-resume` so completed steps are reused from the cache.
+There is a place where you may want to stop and review before continuing. The pipeline stops and prints the command to continue at the end of the run.
 
-> **Resuming on a later day:** `--run_name` defaults to today's date, so a resume the next day changes the prefix and reruns cached steps. Set `--run_name` explicitly (e.g. `--run_name 20261026`) on every command for a run you plan to resume, and keep the same `--outdir` and input parameters.
+To continue, give the outputs of the run that stopped with `--resume_from` and the reviewed outlier file with `--outlier_file`. Nothing before outlier filtering is run again, so nothing is downloaded or built a second time, and the data you reviewed is the data used. This does not depend on Nextflow's cache, so it also works in GLACIER and from a different working directory. Use the same `--prefix` (and `--run_name`) and `--adar_mode` as the run that stopped, because the earlier files are found by those names. `--resume_from` can be the same folder as `--outdir`.
+
+> **On a later day:** `--run_name` defaults to today's date, so the default prefix changes. Set `--run_name` (or `--prefix`) explicitly, e.g. `--run_name 20261026`, to match the earlier run.
 
 **1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `06_temporal_root/`, copy the outliers file and edit the copy, then resume with it:
 
 ```bash
-nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
+nextflow run . --resume_from data/YYYYMMDD --outlier_file my_outliers.txt --prefix <same prefix> --outdir data/YYYYMMDD
 ```
+
+Alternatively, rerun the same command from the same working directory with `-resume`, which reuses the completed steps from Nextflow's cache: `nextflow run . <same parameters> -resume --outlier_file my_outliers.txt`.
 
 Health checks (update runs) are the final step. Review `08_health_checks/health_check_report.txt` and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt`; the tree steps rerun because the input of `pre_filter` has changed.
 

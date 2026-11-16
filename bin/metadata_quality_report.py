@@ -17,6 +17,10 @@ plain-language report that can be sent directly to data generators.
 
 Non-consortium sequences are written to a separate file.
 
+The linelist is optional. Without it, duplicates are not resolved against the linelist (they are
+flagged as unresolved and the higher-completeness accession is kept) and the linelist checks
+(not in linelist, date/location mismatches) are skipped. All other checks still run.
+
 Usage:
     python bin/metadata_quality_report.py \
         -m data/20261029/metadata.tsv \
@@ -497,7 +501,7 @@ def _row_line(meta, acc, fields=('submissionId', 'sampleCollectionDate', 'geoLoc
     return '  |  '.join(parts)
 
 
-def summarize(issues_df, meta, out_file=None):
+def summarize(issues_df, meta, out_file=None, linelist_used=True):
     today = date.today().strftime('%Y-%m-%d')
     n_total = len(meta)
 
@@ -511,6 +515,9 @@ def summarize(issues_df, meta, out_file=None):
     p(f'  PATHOPLEXUS METADATA QUALITY REPORT')
     p(f'  Generated: {today}')
     p(f'  Accessions reviewed: {n_total}')
+    if not linelist_used:
+        p('  No linelist provided: duplicates are not resolved against it and the')
+        p('  linelist checks (not in linelist, date/location mismatches) were skipped.')
     p('=' * 72)
 
     if issues_df.empty:
@@ -566,7 +573,10 @@ def summarize(issues_df, meta, out_file=None):
             section += 1
             p(f'\n  {section}. DUPLICATE SAMPLES — NEED CLARIFICATION ({n_groups} pairs)')
             p('     The following sample IDs appear on more than one accession,')
-            p('     and neither is in the linelist. Please tell us which to keep.')
+            if linelist_used:
+                p('     and neither is in the linelist. Please tell us which to keep.')
+            else:
+                p('     and no linelist was provided to resolve them. Please tell us which to keep.')
             p('     We have temporarily kept the higher-completeness one.\n')
             for sid in dups_unresolved['current_value'].unique():
                 group = dups_unresolved[dups_unresolved['current_value'] == sid]
@@ -801,8 +811,9 @@ def main():
                         help='Pathoplexus metadata TSV')
     parser.add_argument('--aliases', '-a', required=True,
                         help='Aliases CSV (observed_name -> canonical_nom)')
-    parser.add_argument('--linelist', '-l', required=True,
-                        help='INRB linelist Excel with Pathoplexus ID and Sample ID columns')
+    parser.add_argument('--linelist', '-l', default=None,
+                        help='INRB linelist Excel with Pathoplexus ID and Sample ID columns (optional: '
+                             'enables duplicate resolution and linelist mismatch checks)')
     parser.add_argument('--hz-lookup', '-s',
                         help='Health area/zone/province CSV (for province name detection)')
     parser.add_argument('-o', '--output', default='metadata_quality_report.csv',
@@ -845,8 +856,12 @@ def main():
         non_consortium[out_cols].to_csv(args.non_consortium_out, index=False)
         print(f'Wrote {len(non_consortium)} non-consortium sequences to {args.non_consortium_out}')
 
-    # Link to linelist
-    links, ll_by_sample_id = link_to_linelist(consortium, args.linelist)
+    # Link to linelist (optional)
+    if args.linelist:
+        links, ll_by_sample_id = link_to_linelist(consortium, args.linelist)
+    else:
+        links, ll_by_sample_id = {}, {}
+        print('No linelist provided: skipping linelist linking and the linelist checks')
 
     # Run checks on consortium sequences only
     all_issues = []
@@ -856,11 +871,12 @@ def main():
     # Skip accessions handled as duplicates (REVOKE or TEMP_REVOKE) from other checks
     revoked_accs = {i['accessionVersion'] for i in dup_issues
                     if i['suggested_fix'] in ('REVOKE', 'TEMP_REVOKE')}
-    not_ll_issues = check_not_in_linelist(consortium, links)
+    not_ll_issues = check_not_in_linelist(consortium, links) if args.linelist else []
     all_issues.extend([i for i in not_ll_issues if i['accessionVersion'] not in revoked_accs])
 
     all_issues.extend([i for i in check_sample_ids(consortium, links) if i['accessionVersion'] not in revoked_accs])
-    all_issues.extend([i for i in check_linelist_mismatches(consortium, links, alias_map) if i['accessionVersion'] not in revoked_accs])
+    if args.linelist:
+        all_issues.extend([i for i in check_linelist_mismatches(consortium, links, alias_map) if i['accessionVersion'] not in revoked_accs])
     all_issues.extend([i for i in check_admin2(consortium, alias_map, province_names) if i['accessionVersion'] not in revoked_accs])
     all_issues.extend([i for i in check_dates(consortium) if i['accessionVersion'] not in revoked_accs])
 
@@ -892,7 +908,7 @@ def main():
     txt_path = args.report_txt
     if not txt_path:
         txt_path = str(Path(args.output).with_suffix('.txt'))
-    summarize(issues_df, consortium, out_file=txt_path)
+    summarize(issues_df, consortium, out_file=txt_path, linelist_used=bool(args.linelist))
 
     # Write exclude list (duplicates + temp revokes + quality failures)
     if args.exclude_out and not issues_df.empty:

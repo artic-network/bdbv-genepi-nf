@@ -79,8 +79,9 @@ process filter_exclude {
     """
 }
 
-// Checks the Pathoplexus metadata against the INRB linelist (duplicate resolution, date and
-// location mismatches) and lists accessions to exclude automatically. Only run with --linelist.
+// Checks the Pathoplexus metadata (duplicates, locations, dates, sequence quality) and lists accessions
+// to exclude automatically. With the optional INRB linelist (--linelist) duplicates are also resolved
+// against it and date/location mismatches against it are reported.
 process metadata_quality_report {
 
   input:
@@ -98,8 +99,9 @@ process metadata_quality_report {
 
   script:
     hz = params.hz_lookup ? "-s ${hz_lookup}" : ""
+    ll = params.linelist ? "-l ${linelist}" : ""
     """
-    metadata_quality_report.py -m ${metadata} -f ${fasta} -a ${aliases} -l ${linelist} ${hz} \
+    metadata_quality_report.py -m ${metadata} -f ${fasta} -a ${aliases} ${ll} ${hz} \
         -o metadata_quality_report.csv --exclude-out exclude_auto.txt \
         --report-txt metadata_quality_report.txt --non-consortium-out non_consortium_sequences.csv
     # the script only writes the exclude list when there is something to exclude

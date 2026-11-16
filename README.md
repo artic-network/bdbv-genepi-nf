@@ -16,7 +16,7 @@ The pipeline works through the following stages:
 2. **Align** *(`mafft`, optional, `--mafft`)* — [MAFFT](https://mafft.cbrc.jp/alignment/software/) alignment, only needed for unaligned input. Pathoplexus sequences are already aligned.
 3. **Clean** *(`clean`)* — rename headers, trim, mask any specified sites (`--mask_sites`), deduplicate versions, standardise locations using the aliases file and apply the date filter.
 4. **Basic QC** *(`qc_basic`)* — genome-level QC report.
-5. **Metadata quality report** *(`metadata_quality_report`, with `--linelist`)* — check the Pathoplexus metadata against the INRB linelist: resolve duplicates, flag date and location mismatches and quality failures, list non-consortium sequences. Writes an automatic exclusion list (`exclude_auto.txt`).
+5. **Metadata quality report** *(`metadata_quality_report`)* — check the Pathoplexus metadata for duplicate samples, location and date problems and sequence quality failures, and list non-consortium sequences. Writes an automatic exclusion list (`exclude_auto.txt`). With the optional INRB linelist (`--linelist`), duplicates are also resolved against it and date/location mismatches with the linelist are flagged; without it, duplicates are flagged as unresolved (the higher-completeness accession is kept for now) and the linelist checks are skipped.
 6. **Pre-filter** *(`pre_filter`)* — remove sequences in the manual, automatic and pending exclusion lists. The manual and automatic lists are also saved merged as `exclude_merged.txt`.
 7. **Initial tree** *(`iqtree_ancestral`)* — [IQ-TREE](http://www.iqtree.org/) ML tree with ModelFinder (or a fixed `--model`) and ancestral state reconstruction.
 8. **ADAR identification** *(`raccoon`)* — identify ADAR-edited sites with [raccoon](https://github.com/artic-network/raccoon).
@@ -34,7 +34,7 @@ flowchart LR
     T --> O{{review point 1:<br/>outliers}} --> FO[filter_outliers] --> I3[iqtree_final] --> FR[final_root]
     I3 --> H[health_checks]
     I3 --> CR[compare_runs]
-    D -.-> MQ[metadata_quality_report<br/>with --linelist] -.-> F
+    D -.-> MQ[metadata_quality_report] -.-> F
     C --> Q[qc_basic]
     R --> QP[qc_phylo]
 ```
@@ -54,7 +54,7 @@ All outputs are written under `--outdir`, one folder per step, numbered in the o
 | `06_temporal_root/` | Rooted tree, RTT plot and detected outliers (`outliers.txt` when auto-removed) |
 | `07_final/` | Final alignment, ML tree with aBayes support and temporally rooted tree |
 | `08_health_checks/` | Health check report, run comparison and suggested exclusions and retractions (update runs) |
-| `to_review/` | Things to look at, not numbered: QC reports (`qc_report_basic.txt`, `qc_report_phylo.txt`), `missing_aliases.txt`, and with `--linelist` the metadata quality report, `exclude_auto.txt` and `non_consortium_sequences.csv`. Also `exclude_merged.txt` |
+| `to_review/` | Things to look at, not numbered: QC reports (`qc_report_basic.txt`, `qc_report_phylo.txt`), `missing_aliases.txt`, the metadata quality report, `exclude_auto.txt` and `non_consortium_sequences.csv`. Also `exclude_merged.txt` |
 | `execution/` | Nextflow timeline, report and trace |
 | `<prefix>.run_log.txt` | Run log: the command, parameters and outcome, followed by the screen output of every step in order. Written whether the run succeeds or fails |
 
@@ -74,6 +74,7 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 | `--organism` | LAPIS organism slug used for download | `ebola-bdbv` |
 | `--scope` | Countries to download: `drc`, a comma-separated list such as `drc,kenya`, or `outbreak` | `drc` |
 | `--max_date` | Latest collection date to download (`YYYY-MM-DD`). Only used when downloading | no upper limit |
+| `--pathoplexus_filters` | Extra Pathoplexus filters as free text, e.g. `geoLocAdmin1=Ituri&completenessFrom=0.9`. Only used when downloading. See [Filtering the Pathoplexus download](#filtering-the-pathoplexus-download) | |
 | `--previous_data` | Previous run folder to compare against in health checks. Health checks are skipped when unset | |
 
 ### Output options
@@ -113,7 +114,7 @@ These are available, but the presets are recommended.
 | `--mask_sites` | Comma-separated 1-based positions to mask to N (e.g. `5246,5249,5251`) | |
 | `--mask_sites_file` | File of 1-based positions to mask, one per line (`#` comments allowed). Use `--mask_sites_file false` to mask none | `data/mask_sites.txt` |
 | `--exclude_file` | Accessions to always exclude from analysis | `data/exclude.txt` |
-| `--linelist` | INRB linelist Excel file (Pathoplexus ID and Sample ID columns). Turns on the metadata quality report, duplicate resolution, linelist mismatch checks and automatic exclusions | |
+| `--linelist` | Optional INRB linelist Excel file (Pathoplexus ID and Sample ID columns). Adds duplicate resolution against the linelist and linelist mismatch checks to the metadata quality report, which runs either way | |
 | `--hz_lookup` | Health area/zone/province CSV used to detect province names in the quality report. Use `--hz_lookup false` to skip | `data/health_area_zone_province_slim.csv` |
 | `--slack_webhook` | Slack incoming webhook; posts a summary when the run finishes or fails. Prefer setting the `SLACK_WEBHOOK_URL` environment variable so the URL is not on the command line. It is never written to the run log | `$SLACK_WEBHOOK_URL` |
 | `--exclude_pending` | Accessions temporarily excluded while under review | `data/exclude_pending.txt` |
@@ -168,6 +169,29 @@ To use files you have already downloaded, add `--fasta data/YYYYMMDD/aligned.fas
 - `drc` — DRC sequences only (applies the Pathogen Genomic Lab group filter)
 - `drc,kenya` — DRC + Kenya
 - `outbreak` — all current outbreak countries (DRC, Kenya, Uganda)
+
+### Filtering the Pathoplexus download
+
+`--pathoplexus_filters` adds your own filters to the download. It is free text, written like the query string of a Pathoplexus URL: `field=value`, with `&` between filters. The filters apply to both the metadata and the sequences, and only when downloading (not with `--fasta`).
+
+```bash
+--pathoplexus_filters "geoLocAdmin1=Ituri&completenessFrom=0.9"
+```
+
+| Write | Meaning | Example |
+|-------|---------|---------|
+| `field=value` | Exact match (case-sensitive) | `geoLocAdmin1=Ituri` |
+| `field=a&field=b` | Either value | `geoLocAdmin1=Ituri&geoLocAdmin1=Tshopo` |
+| `fieldFrom=n`, `fieldTo=n` | At least / at most (numbers) | `completenessFrom=0.9`, `totalAmbiguousNucsTo=100` |
+| `field.regex=pattern` | Regular expression | `geoLocAdmin2.regex=^Bun` |
+| `field.isNull=true` or `false` | Is empty / is not empty | `groupName.isNull=false` |
+
+- **Fields** are Pathoplexus metadata fields, with the exact capitalisation, for example `geoLocAdmin1`, `geoLocAdmin2`, `hostNameScientific`, `groupName`, `submitter`, `length`, `completeness`, `totalAmbiguousNucs`, `sequencingDate`. The full list is in the [Pathoplexus API reference](https://lapis.pathoplexus.org/ebola-bdbv/api-docs). A misspelt field stops the run straight away and Pathoplexus says which one it did not recognise.
+- **Collection dates** use `sampleCollectionDateRangeLowerFrom=YYYY-MM-DD` (not before) and `sampleCollectionDateRangeUpperTo=YYYY-MM-DD` (not after). The same as `--max_date`, which a filter overrides.
+- **Built-in filters:** your filter replaces the built-in one of the same name. A `--scope drc` download is limited to the `Pathogen Genomic Lab` group, and any `groupName` filter replaces that, so `groupName.isNull=false` means all groups.
+- **Countries:** use `--scope`. `geoLocCountry` is not accepted here. The output-format filters (`dataFormat`, `fields`, `limit`, `offset`, `orderBy`) are not accepted either.
+- **Spaces** are fine (`hostNameScientific=Homo sapiens`). To include a literal `+`, `&` or `%` in a value, write it as `%2B`, `%26` or `%25`. A filter can be put on a new line instead of using `&`.
+- Pasting the part of a Pathoplexus search URL after the `?` works.
 
 Output file names start with `--prefix`, which defaults to `bdbv_<run_name>` (for example `bdbv_20261026`). `--run_name` defaults to today's date, `YYYYMMDD`.
 

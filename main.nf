@@ -29,14 +29,12 @@ workflow {
   aliases_ch = channel.value(file("${params.aliases_file}", checkIfExists:true))
   manual_exclude_ch = channel.fromPath([params.exclude_file].findAll { it }, checkIfExists:true)
 
-  // INRB linelist: duplicate resolution, mismatch checks and automatic exclusions
-  auto_exclude_ch = channel.empty()
-  if ( params.linelist ) {
-      linelist_ch = channel.value(file("${params.linelist}", checkIfExists:true))
-      hz_ch = channel.value(params.hz_lookup ? file("${params.hz_lookup}", checkIfExists:true) : [])
-      metadata_quality_report(metadata_ch, fasta_ch, aliases_ch, linelist_ch, hz_ch)
-      auto_exclude_ch = metadata_quality_report.out.exclude_auto
-  }
+  // Metadata quality report and automatic exclusions. The INRB linelist is optional: with it duplicates
+  // are resolved against it and the linelist checks run; without it only the other checks run.
+  linelist_ch = channel.value(params.linelist ? file("${params.linelist}", checkIfExists:true) : [])
+  hz_ch = channel.value(params.hz_lookup ? file("${params.hz_lookup}", checkIfExists:true) : [])
+  metadata_quality_report(metadata_ch, fasta_ch, aliases_ch, linelist_ch, hz_ch)
+  auto_exclude_ch = metadata_quality_report.out.exclude_auto
   pending_exclude_ch = channel.fromPath([params.exclude_pending].findAll { it }, checkIfExists:true)
 
   // pre_filter removes manual, automatic and pending exclusions
@@ -92,8 +90,7 @@ workflow {
               .mix(pre_filter.out, adar_mask.out.aln, adar_mask.out.report, filter_outliers.out, final_root.out.all,
                    temporal_root.out.all, merged_exclude_ch)
               .mix(outliers_ch.flatten())
-          if ( params.linelist )
-              comparison_ch = comparison_ch.mix(metadata_quality_report.out.csv)
+          comparison_ch = comparison_ch.mix(metadata_quality_report.out.csv)
           compare_runs(comparison_ch.collect(), metadata_ch, previous_ch)
       }
   }

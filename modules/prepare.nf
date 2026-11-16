@@ -8,7 +8,9 @@ process mafft {
 
   script:
     """
-    mafft --auto --thread ${task.cpus} ${fasta} > ${params.prefix}.mafft.fasta
+    nt=\$(effective_cpus.sh ${task.cpus})
+    echo "MAFFT threads: \$nt (requested up to ${task.cpus})" >&2
+    mafft --auto --thread \$nt ${fasta} > ${params.prefix}.mafft.fasta
     """
 }
 

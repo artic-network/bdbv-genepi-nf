@@ -184,7 +184,7 @@
           "description": "Upper limit on threads for MAFFT and IQ-TREE. The CPUs of the machine are used up to this number",
           "default": 16,
           "minimum": 1,
-          "help_text": "A machine with fewer CPUs than this uses all of its CPUs, so a small machine is not over-subscribed and a large one is used fully. IQ-TREE tests thread counts up to this limit and keeps the fastest. Results from the same seed can differ slightly between machines that use different numbers of threads; set this to a fixed value (for example 4) if you need identical settings everywhere."
+          "help_text": "A machine with fewer CPUs than this uses all of them, so a small machine is not over-subscribed and a large one is used fully. Inside Docker the limit follows what the container is allowed (the CPUs given to Docker Desktop, or a --cpus / --cpuset-cpus limit), not just what the machine has. IQ-TREE tests thread counts up to this limit and keeps the fastest. Results from the same seed can differ slightly between machines that use different numbers of threads; set this to a fixed value (for example 4) if you need identical settings everywhere."
         },
         "aliases_file": {
           "type": "string",

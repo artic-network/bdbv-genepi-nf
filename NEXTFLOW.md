@@ -65,7 +65,7 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--trim_start`, `--trim_end` | Alignment positions to keep, 1-based inclusive (default `47` and `18851`) |
 | `--mask_sites`, `--mask_sites_file` | 1-based positions to mask to N (comma-separated list, or a file with one per line). The file defaults to `data/mask_sites.txt`; use `--mask_sites_file false` to mask none |
 | `--exclude_file`, `--exclude_pending` | Manual exclusions (default `data/exclude.txt`) and pending-review exclusions |
-| `--linelist` | INRB linelist Excel file: turns on the metadata quality report, duplicate resolution, mismatch checks and automatic exclusions (`to_review/exclude_auto.txt`) |
+| `--linelist` | Optional INRB linelist Excel file. The metadata quality report and automatic exclusions (`to_review/exclude_auto.txt`) run either way; the linelist adds duplicate resolution and date/location mismatch checks against it |
 | `--hz_lookup` | Health area/zone/province CSV for the quality report (default `data/health_area_zone_province_slim.csv`; `false` to skip) |
 | `--slack_webhook` | Slack webhook for a run summary. Prefer the `SLACK_WEBHOOK_URL` environment variable; the URL is never logged |
 | `--model` | Skip ModelFinder and use this model |

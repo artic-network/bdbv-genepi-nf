@@ -117,7 +117,7 @@
         "outlier_removal_threshold": {
           "type": "number",
           "title": "Outlier removal threshold",
-          "default": 3, 
+          "default": 3,
           "description": "Auto-remove temporal outliers with |z| >= this value and continue",
           "help_text": "If neither this nor --outlier_file is given, the pipeline stops after temporal rooting for review"
         },
@@ -199,8 +199,8 @@
         "linelist": {
           "type": "string",
           "title": "INRB linelist",
-          "description": "INRB linelist Excel file. Enables the metadata quality report, duplicate resolution and linelist mismatch checks",
-          "help_text": "Needs the Pathoplexus ID and Sample ID columns. Automatic exclusions from the report (resolved duplicates, quality failures) are applied in the pre-filter.",
+          "description": "Optional INRB linelist Excel file. Adds duplicate resolution and linelist mismatch checks to the metadata quality report",
+          "help_text": "Needs the Pathoplexus ID and Sample ID columns. The metadata quality report runs without it; the linelist adds duplicate resolution against it and date/location mismatch checks. Automatic exclusions from the report (duplicates, quality failures) are applied in the pre-filter either way.",
           "format": "file-path"
         },
         "hz_lookup": {

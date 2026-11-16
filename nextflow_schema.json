@@ -99,7 +99,7 @@
         "pathoplexus_filters": {
           "type": "string",
           "title": "Pathoplexus filters",
-          "description": "Optional extra filters for the Pathoplexus download, written like a URL query string: field=value, with & between filters e.g. geoLocAdmin1=Ituri&completenessFrom=0.9",
+          "description": "Optional extra filters for the Pathoplexus download, written like a URL query string: field=value, with & between filters e.g. geoLocAdmin1=Ituri&completenessFrom=0.9"
         },
         "model": {
           "type": "string",

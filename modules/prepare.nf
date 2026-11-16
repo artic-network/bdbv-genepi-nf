@@ -38,7 +38,10 @@ process clean {
         extra += " --mask_sites ${params.mask_sites}"
     if ( params.mask_sites_file )
         extra += " --mask_sites_file ${mask_sites_file}"
+    hint = params.mafft ? "" : "--mafft-hint"
     """
+    # fail early, rather than when IQ-TREE reads the alignment, if the input is not aligned
+    check_alignment.py ${fasta} ${hint}
     clean_up_pathoplexus.py -f ${fasta} -m ${metadata} -a ${aliases} -p ${params.prefix}.cleaned --missing-aliases-out missing_aliases.txt ${extra} \
         | tee ${params.prefix}.cleaned.log
     """

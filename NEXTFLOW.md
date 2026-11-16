@@ -74,6 +74,7 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--model` | Skip ModelFinder and use this model |
 | `--adar_mode` | `mask` (default), `exclude_tc` or `exclude_all` |
 | `--seed` | IQ-TREE seed (default 42) |
+| `--max_threads` | Upper limit on threads for MAFFT and IQ-TREE (default 16). The machine's CPUs are used up to this number; IQ-TREE picks the best count up to it. Set a fixed value if you need identical settings on every machine |
 | `--outlier_removal_threshold` | Auto-remove outliers with \|z\| ≥ N |
 | `--outlier_file` | Reviewed outlier file (continues after review point 1) |
 | `--resume_from` | Output folder of the earlier run that stopped for outlier review; skips everything before outlier filtering |

@@ -144,8 +144,15 @@
           "type": "string",
           "title": "Outlier file",
           "description": "Reviewed outlier exclusion file; continues from outlier filtering",
-          "help_text": "Use with -resume after editing a copy of the detected outliers file in 06_temporal_root/. Overrides --outlier_removal_threshold.",
+          "help_text": "Needs the earlier run's outputs to continue from: give the earlier run's output folder as 'Continue from earlier outputs' so earlier steps are not repeated. Overrides --outlier_removal_threshold.",
           "format": "file-path"
+        },
+        "resume_from": {
+          "type": "string",
+          "title": "Continue from earlier outputs",
+          "description": "Output folder of an earlier run that stopped for outlier review. Skips every step before outlier filtering",
+          "help_text": "Use with the reviewed outlier file: the pipeline takes the ADAR-masked alignment, the model and the temporal rooting results from this folder and carries on from outlier filtering, so nothing is downloaded or built again and the data you reviewed is the data used. Give the same prefix, run name and ADAR mode as the earlier run. Can be the same as the output directory.",
+          "format": "directory-path"
         }
       }
     },

@@ -40,13 +40,15 @@ The reports are written to `health_check_report.txt` and `run_comparison.txt`. U
 
 ## Manual review point and resuming
 
-There is a place where you may want to stop and review. Resume with `-resume` so completed steps are reused from cache, keeping the same `--outdir`, `--prefix` and input parameters.
+There is a place where you may want to stop and review. To continue, give the earlier run's output folder with `--resume_from` and the reviewed outliers with `--outlier_file`. Nothing before outlier filtering is run again, and it does not rely on Nextflow's cache. Use the same `--prefix` and `--adar_mode` as the run that stopped.
 
 **1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `06_temporal_root/`, copy the outliers file, edit the copy, then resume:
 
 ```bash
-nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
+nextflow run . --resume_from data/YYYYMMDD --outlier_file my_outliers.txt --prefix <same prefix> --outdir data/YYYYMMDD
 ```
+
+(In the same working directory you can instead rerun with `-resume --outlier_file my_outliers.txt`.)
 
 Health checks (update runs) are the final step. Review `health_check_report.txt` and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt` (the tree steps rerun because the `pre_filter` input changed).
 
@@ -74,6 +76,7 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--seed` | IQ-TREE seed (default 42) |
 | `--outlier_removal_threshold` | Auto-remove outliers with \|z\| ≥ N |
 | `--outlier_file` | Reviewed outlier file (continues after review point 1) |
+| `--resume_from` | Output folder of the earlier run that stopped for outlier review; skips everything before outlier filtering |
 | `--previous_data` | Previous run folder, enables health checks |
 | `--full_health_check` | Health checks on all genomes, not just new ones |
 

@@ -25,12 +25,6 @@
           "description": "Comma-separated list of countries (drc,kenya,uganda) or 'outbreak' for all",
           "default": "drc"
         },
-        "max_date": {
-          "type": "string",
-          "title": "Maximum collection date",
-          "description": "Latest collection date to download (YYYY-MM-DD). Default: no upper limit",
-          "help_text": "Only used when downloading from Pathoplexus (no --fasta)."
-        },
         "fasta": {
           "type": "string",
           "title": "Optional FASTA",
@@ -105,7 +99,8 @@
         "model": {
           "type": "string",
           "title": "Substitution model",
-          "description": "Use this model (e.g. GTR+F+R3) instead of running ModelFinder"
+          "default": "GTR+F+R3",
+          "description": "Use this model (e.g. GTR+F+R3) with IQTree, or if blank, run ModelFinder"
         },
         "adar_mode": {
           "type": "string",
@@ -122,6 +117,7 @@
         "outlier_removal_threshold": {
           "type": "number",
           "title": "Outlier removal threshold",
+          "default": 3, 
           "description": "Auto-remove temporal outliers with |z| >= this value and continue",
           "help_text": "If neither this nor --outlier_file is given, the pipeline stops after temporal rooting for review"
         },

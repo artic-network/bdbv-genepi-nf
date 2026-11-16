@@ -2,7 +2,11 @@
 
 **Download, clean and build maximum-likelihood phylogenies from Bundibugyo ebolavirus (BDBV) genomes**
 
-A [Nextflow](https://www.nextflow.io/) pipeline for downloading Bundibugyo ebolavirus (BDBV) genome sequences from [Pathoplexus](https://pathoplexus.org), cleaning and quality-checking them, handling ADAR-edited genomes, and building a temporally rooted maximum-likelihood tree. It can be run as an initial run on a fresh download, or as an update run that also compares the new dataset with a previous one. Every step runs in a Docker container by default.
+A [Nextflow](https://www.nextflow.io/) pipeline for downloading Bundibugyo ebolavirus (BDBV) genome sequences from [Pathoplexus](https://pathoplexus.org), cleaning and quality-checking them, handling ADAR-edited genomes, and building a temporally rooted maximum-likelihood tree. It can be run as an initial run on a fresh download, or as an update run that also compares the new dataset with a previous one. Every step runs in a Docker container by default. Based on [this](https://github.com/pekarj/bdbv-pipeline) original python pipeline.
+
+## Running with GLACIER
+
+This pipeline has been designed to be run in the interactive [GLACIER](https://github.com/ARTIC-Kraemer-Lab/GLACIER) GUI.
 
 ## Pipeline overview
 
@@ -31,77 +35,6 @@ flowchart LR
     C --> Q[qc_basic]
     R --> QP[qc_phylo]
 ```
-
-## Installation
-
-Install [Nextflow](https://www.nextflow.io/) (≥ 23.04) and [Docker](https://www.docker.com/products/docker-desktop), then clone this repository:
-
-```bash
-git clone https://github.com/rmcolq/bdbv-pipeline-nf.git
-cd bdbv-pipeline-nf
-```
-
-No other setup is needed. The pipeline pulls the [`articnetworkorg/bdbv-pipeline`](https://hub.docker.com/r/articnetworkorg/bdbv-pipeline) image from Docker Hub automatically, and it contains everything the pipeline needs, including IQ-TREE. Docker is the default (`-profile standard`). Other options:
-
-| Option | Use |
-|--------|-----|
-| `-profile singularity` | Run the steps in Singularity instead of Docker |
-| `-profile conda` | Create the environment from `environment.yml` rather than using a container. IQ-TREE is not available through conda on every platform; if it fails to install, use a container instead |
-| `--wf.container_version TAG` | Use a different image tag, e.g. your own build: `docker build -t articnetworkorg/bdbv-pipeline:dev .` then `--wf.container_version dev` |
-
-## Running the pipeline
-
-### Initial run
-
-Downloads from Pathoplexus, builds the tree, automatically removing outliers with |z| ≥ 3:
-
-```bash
-nextflow run . \
-    --outdir data/YYYYMMDD \
-    --scope drc \
-    --min_date 2026-05-01 \
-    --adar_mode mask \
-    --outlier_removal_threshold 3
-```
-
-To use files you have already downloaded, add `--fasta data/YYYYMMDD/aligned.fasta --metadata data/YYYYMMDD/metadata.tsv`. Use `--mafft` if the sequences are not already aligned.
-
-`--scope` options:
-- `drc` — DRC sequences only (applies the Pathogen Genomic Lab group filter)
-- `drc,kenya` — DRC + Kenya
-- `outbreak` — all current outbreak countries (DRC, Kenya, Uganda)
-
-Output file names start with `--prefix`, which defaults to `bdbv_<run_name>` (for example `bdbv_20261026`). `--run_name` defaults to today's date, `YYYYMMDD`.
-
-### Update run
-
-As the initial run, plus `--previous_data` to run health checks against the previous dataset:
-
-```bash
-nextflow run . \
-    --outdir data/YYYYMMDD \
-    --previous_data data/YYYYMMDD_previous \
-    --outlier_removal_threshold 3
-```
-
-The report is written to `health_checks/health_check_report.txt`. Unlike the Python `bin/run.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
-
-- `health_checks/exclude_pending.additions.txt` — new `duplicate_sample` flags to add to `data/exclude_pending.txt`
-- `health_checks/retractions.additions.txt` — retracted accessions to add to your `retractions.txt`
-
-### Manual review points and resuming
-
-There is a place where you may want to stop and review before continuing. The pipeline stops and prints the command to resume at the end of the run. Resume with `-resume` so completed steps are reused from the cache.
-
-> **Resuming on a later day:** `--run_name` defaults to today's date, so a resume the next day changes the prefix and reruns cached steps. Set `--run_name` explicitly (e.g. `--run_name 20261026`) on every command for a run you plan to resume, and keep the same `--outdir` and input parameters.
-
-**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `temporal_root/`, copy the outliers file and edit the copy, then resume with it:
-
-```bash
-nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
-```
-
-Health checks (update runs) are the final step. Review `health_checks/health_check_report.txt` and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt`; the tree steps rerun because the input of `pre_filter` has changed.
 
 ## Output files
 
@@ -192,45 +125,75 @@ These are available, but the presets are recommended.
 
 The health checks compare the current and previous runs. Per-sequence flags: `high_adar`, `high_Ns`, `low_coverage`, `near_outlier`, `many_gaps`, `long_branch`, `duplicate_sample`, `phylo_conflict`. Dataset-level checks: outlier count, clock rate shift, R², ADAR branch count, genome count and version changes or retractions.
 
-## Running the Python scripts without Nextflow
 
-The steps are also available as standalone Python scripts in `bin/`, which can be run directly. Create the conda environment first:
+## Command Line Installation
 
-```bash
-conda env create -f environment.yml
-conda activate bdbv-pipeline
-```
-
-`environment.yml` includes IQ-TREE 3, which conda can't install on every platform. If it fails on yours, remove that line and install [IQ-TREE 2/3](http://www.iqtree.org/) separately, available on `PATH` as `iqtree3`. `raccoon` requires `baltic<1`, which is pinned in `environment.yml`.
-
-**Download sequences:**
+If running on the command line instead of GLACIER, first install [Nextflow](https://www.nextflow.io/) (≥ 23.04) and [Docker](https://www.docker.com/products/docker-desktop), then clone this repository:
 
 ```bash
-python bin/download_pathoplexus.py --scope drc -o data/YYYYMMDD
+git clone https://github.com/rmcolq/bdbv-pipeline-nf.git
+cd bdbv-pipeline-nf
 ```
 
-**Run the pipeline** (stops after temporal rooting for outlier review unless `--outlier-removal-threshold` is given; resume with `--skip-to filter_outliers`):
+No other setup is needed. The pipeline pulls the [`articnetworkorg/bdbv-pipeline`](https://hub.docker.com/r/articnetworkorg/bdbv-pipeline) image from Docker Hub automatically, and it contains everything the pipeline needs, including IQ-TREE. Docker is the default (`-profile standard`). Other options:
+
+| Option | Use |
+|--------|-----|
+| `-profile singularity` | Run the steps in Singularity instead of Docker |
+| `-profile conda` | Create the environment from `environment.yml` rather than using a container. IQ-TREE is not available through conda on every platform; if it fails to install, use a container instead |
+| `--wf.container_version TAG` | Use a different image tag, e.g. your own build: `docker build -t articnetworkorg/bdbv-pipeline:dev .` then `--wf.container_version dev` |
+
+## Running the pipeline
+
+### Initial run
+
+Downloads from Pathoplexus, builds the tree, automatically removing outliers with |z| ≥ 3:
 
 ```bash
-python bin/run_pipeline.py \
-    -f data/YYYYMMDD/aligned.fasta \
-    -m data/YYYYMMDD/metadata.tsv \
-    -p data/YYYYMMDD/prefix \
-    --min-date 2026-05-01 \
-    --exclude-file data/exclude.txt \
-    --mask-sites-file data/mask_sites.txt \
-    --adar-mode mask \
-    --outlier-removal-threshold 3
+nextflow run . \
+    --outdir data/YYYYMMDD \
+    --scope drc \
+    --min_date 2026-05-01 \
+    --adar_mode mask \
+    --outlier_removal_threshold 3
 ```
 
-**Run the full workflow in one command** (download → quality report → pipeline → health checks; unlike the Nextflow pipeline this appends `duplicate_sample` flags to `data/exclude_pending.txt` itself):
+To use files you have already downloaded, add `--fasta data/YYYYMMDD/aligned.fasta --metadata data/YYYYMMDD/metadata.tsv`. Use `--mafft` if the sequences are not already aligned.
+
+`--scope` options:
+- `drc` — DRC sequences only (applies the Pathogen Genomic Lab group filter)
+- `drc,kenya` — DRC + Kenya
+- `outbreak` — all current outbreak countries (DRC, Kenya, Uganda)
+
+Output file names start with `--prefix`, which defaults to `bdbv_<run_name>` (for example `bdbv_20261026`). `--run_name` defaults to today's date, `YYYYMMDD`.
+
+### Update run
+
+As the initial run, plus `--previous_data` to run health checks against the previous dataset:
 
 ```bash
-python bin/run.py --previous-data data/20260915 --outdir data/YYYYMMDD --prefix BDBV2026.outbreak --scope outbreak
+nextflow run . \
+    --outdir data/YYYYMMDD \
+    --previous_data data/YYYYMMDD_previous \
+    --outlier_removal_threshold 3
 ```
 
-**Run health checks:**
+The report is written to `health_checks/health_check_report.txt`. Unlike the Python `bin/run.py` script, the pipeline never edits files in `data/`. It writes suggestions for you to review and merge yourself:
+
+- `health_checks/exclude_pending.additions.txt` — new `duplicate_sample` flags to add to `data/exclude_pending.txt`
+- `health_checks/retractions.additions.txt` — retracted accessions to add to your `retractions.txt`
+
+### Manual review points and resuming
+
+There is a place where you may want to stop and review before continuing. The pipeline stops and prints the command to resume at the end of the run. Resume with `-resume` so completed steps are reused from the cache.
+
+> **Resuming on a later day:** `--run_name` defaults to today's date, so a resume the next day changes the prefix and reruns cached steps. Set `--run_name` explicitly (e.g. `--run_name 20261026`) on every command for a run you plan to resume, and keep the same `--outdir` and input parameters.
+
+**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `temporal_root/`, copy the outliers file and edit the copy, then resume with it:
 
 ```bash
-python bin/health_checks.py --current data/20261012 --previous data/20260915 --prefix Ituri2026.DRC_trimmed
+nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
 ```
+
+Health checks (update runs) are the final step. Review `health_checks/health_check_report.txt` and update the exclusion lists. If something must be excluded, rerun with the updated `data/exclude_pending.txt`; the tree steps rerun because the input of `pre_filter` has changed.
+

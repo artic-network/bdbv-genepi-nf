@@ -1,0 +1,24 @@
+name: Check nextflow_schema.json
+
+# A broken schema stops the parameter form (for example in GLACIER) from loading,
+# so check it whenever it changes.
+on:
+  pull_request:
+    paths:
+      - nextflow_schema.json
+      - .github/scripts/check_schema.py
+      - .github/workflows/check-schema.yml
+  push:
+    branches: [main]
+    paths:
+      - nextflow_schema.json
+      - .github/scripts/check_schema.py
+      - .github/workflows/check-schema.yml
+
+jobs:
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the schema is valid and consistent
+        run: python3 .github/scripts/check_schema.py nextflow_schema.json

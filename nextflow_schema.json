@@ -138,7 +138,7 @@
           "type": "string",
           "title": "Outlier file",
           "description": "Reviewed outlier exclusion file; continues from outlier filtering",
-          "help_text": "Use with -resume after editing a copy of the detected outliers file in 09_temporal_root/. Overrides --outlier_removal_threshold.",
+          "help_text": "Use with -resume after editing a copy of the detected outliers file in 08_temporal_root/. Overrides --outlier_removal_threshold.",
           "format": "file-path"
         }
       }

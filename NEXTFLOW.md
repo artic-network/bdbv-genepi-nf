@@ -42,7 +42,7 @@ The reports are written to `health_check_report.txt` and `run_comparison.txt`. U
 
 There is a place where you may want to stop and review. Resume with `-resume` so completed steps are reused from cache, keeping the same `--outdir`, `--prefix` and input parameters.
 
-**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `09_temporal_root/`, copy the outliers file, edit the copy, then resume:
+**1. Outliers (after temporal rooting).** If you do not set `--outlier_removal_threshold`, the pipeline stops after temporal rooting. Review the RTT plot and `<prefix>.ADAR_masked.outliers.txt` in `08_temporal_root/`, copy the outliers file, edit the copy, then resume:
 
 ```bash
 nextflow run . <same parameters> -resume --outlier_file my_outliers.txt
@@ -65,7 +65,7 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--trim_start`, `--trim_end` | Alignment positions to keep, 1-based inclusive (default `47` and `18851`) |
 | `--mask_sites`, `--mask_sites_file` | 1-based positions to mask to N (comma-separated list, or a file with one per line). The file defaults to `data/mask_sites.txt`; use `--mask_sites_file false` to mask none |
 | `--exclude_file`, `--exclude_pending` | Manual exclusions (default `data/exclude.txt`) and pending-review exclusions |
-| `--linelist` | INRB linelist Excel file: turns on the metadata quality report, duplicate resolution, mismatch checks and automatic exclusions (`03_to_review/exclude_auto.txt`) |
+| `--linelist` | INRB linelist Excel file: turns on the metadata quality report, duplicate resolution, mismatch checks and automatic exclusions (`02_to_review/exclude_auto.txt`) |
 | `--hz_lookup` | Health area/zone/province CSV for the quality report (default `data/health_area_zone_province_slim.csv`; `false` to skip) |
 | `--slack_webhook` | Slack webhook for a run summary. Prefer the `SLACK_WEBHOOK_URL` environment variable; the URL is never logged |
 | `--model` | Skip ModelFinder and use this model |

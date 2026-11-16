@@ -198,8 +198,8 @@
         },
         "linelist": {
           "type": "string",
-          "title": "INRB linelist",
-          "description": "INRB linelist Excel file. Enables the metadata quality report, duplicate resolution and linelist mismatch checks",
+          "title": "Local linelist",
+          "description": "Local linelist Excel file. Enables the metadata quality report, duplicate resolution and linelist mismatch checks",
           "help_text": "Needs the Pathoplexus ID and Sample ID columns. Automatic exclusions from the report (resolved duplicates, quality failures) are applied in the pre-filter.",
           "format": "file-path"
         },

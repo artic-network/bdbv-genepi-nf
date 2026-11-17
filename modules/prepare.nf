@@ -8,7 +8,7 @@ process mafft {
 
   script:
     """
-    mafft --auto --thread ${task.cpus} ${fasta} > ${params.prefix}.mafft.fasta
+    mafft --auto --thread -1 ${fasta} > ${params.prefix}.mafft.fasta
     """
 }
 

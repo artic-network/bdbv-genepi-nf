@@ -11,9 +11,8 @@ process iqtree_ancestral {
 
   script:
     model = params.model ?: "MFP"
-    threads = task.cpus > 1 ? "-nt AUTO -ntmax ${task.cpus}" : "-nt 1"
     """
-    iqtree3 ${threads} -s ${alignment} -m ${model} -czb --ancestral -redo -seed ${params.seed}
+    iqtree3 -nt AUTO -s ${alignment} -m ${model} -czb --ancestral -redo -seed ${params.seed}
     if [ "${model}" = "MFP" ]; then
         sed -n 's/^Best-fit model according to BIC:[[:space:]]*//p' ${alignment}.iqtree > best_model.txt
         [ -s best_model.txt ] || { echo "ERROR: could not find best-fit model in ${alignment}.iqtree" >&2; exit 1; }
@@ -36,8 +35,7 @@ process iqtree {
 
   script:
     args = task.ext.args ?: ""
-    threads = task.cpus > 1 ? "-nt AUTO -ntmax ${task.cpus}" : "-nt 1"
     """
-    iqtree3 ${threads} -s ${alignment} -m ${model} -czb -redo -seed ${params.seed} ${args}
+    iqtree3 -nt AUTO -s ${alignment} -m ${model} -czb -redo -seed ${params.seed} ${args}
     """
 }

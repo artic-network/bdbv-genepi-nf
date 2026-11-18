@@ -107,7 +107,7 @@
           "default": "GTR+F+R3",
           "description": "Use this model (e.g. GTR+F+R3) with IQTree, or if blank, run ModelFinder",
           "enum": [
-            null,
+            "",
             "GTR+F+R3",
             "GTR+G4",
             "GTR",

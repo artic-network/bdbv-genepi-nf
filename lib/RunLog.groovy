@@ -46,6 +46,14 @@ class RunLog {
         }
         out << "\n"
 
+        // On failure, include Nextflow's own error report: the message shown on screen, with the failed
+        // command and its error output. It does not depend on the trace file, which may not have been
+        // written yet (or may not list the failed task) when the run log is built.
+        if ( !workflow.success && workflow.errorReport ) {
+            out << "── Nextflow error report ──\n"
+            out << redact(workflow.errorReport.toString().trim()) << "\n\n"
+        }
+
         if ( trace.exists() ) {
             tasks.each { t ->
                 out << "── ${t.name} ── [${t.submit}] ${t.status}, exit ${t.exit}\n"

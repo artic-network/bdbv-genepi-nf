@@ -109,6 +109,10 @@
           "enum": [
             null,
             "GTR+F+R3",
+            "GTR+G4",
+            "GTR",
+            "HKY+F+R3",
+            "HKY+G4",
             "HKY",
             "MFP"
           ]

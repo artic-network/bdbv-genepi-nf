@@ -295,6 +295,9 @@
       "$ref": "#/definitions/additional_options"
     },
     {
+      "$ref": "#/definitions/advanced_options"
+    },
+    {
       "$ref": "#/definitions/miscellaneous_options"
     }
   ],

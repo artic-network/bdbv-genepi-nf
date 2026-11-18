@@ -35,7 +35,7 @@
         "mafft": {
           "type": "boolean",
           "title": "Run MAFFT",
-          "description": "Align sequences with MAFFT before cleaning. Not needed for pre-aligned Pathoplexus sequences",
+          "description": "Align sequences with MAFFT before cleaning. Not needed for pre-aligned Pathoplexus sequences, and skipped if the input is already aligned",
           "help_text": "Not needed for pre-aligned Pathoplexus sequences",
           "default": false
         },

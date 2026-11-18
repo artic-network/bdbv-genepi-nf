@@ -13,7 +13,7 @@ This pipeline has been designed to be run in the interactive [GLACIER](https://g
 The pipeline works through the following stages:
 
 1. **Download** *(`download`)* — fetch the aligned sequences and metadata from Pathoplexus. Skipped if you provide `--fasta` and `--metadata`.
-2. **Align** *(`mafft`, optional, `--mafft`)* — [MAFFT](https://mafft.cbrc.jp/alignment/software/) alignment, only needed for unaligned input. Pathoplexus sequences are already aligned.
+2. **Align** *(`mafft`, optional, `--mafft`)* — [MAFFT](https://mafft.cbrc.jp/alignment/software/) alignment, only needed for unaligned input. Pathoplexus sequences are already aligned, so if the input is already aligned (all sequences the same length) MAFFT is skipped and the input is used as it is, because re-aligning would change the alignment positions that `--trim_start`, `--trim_end` and the mask sites refer to.
 3. **Clean** *(`clean`)* — rename headers, trim, mask any specified sites (`--mask_sites`), deduplicate versions, standardise locations using the aliases file and apply the date filter.
 4. **Basic QC** *(`qc_basic`)* — genome-level QC report.
 5. **Metadata quality report** *(`metadata_quality_report`)* — check the Pathoplexus metadata for duplicate samples, location and date problems and sequence quality failures, and list non-consortium sequences. Writes an automatic exclusion list (`exclude_auto.txt`). With the optional INRB linelist (`--linelist`), duplicates are also resolved against it and date/location mismatches with the linelist are flagged; without it, duplicates are flagged as unresolved (the higher-completeness accession is kept for now) and the linelist checks are skipped.
@@ -70,7 +70,7 @@ Parameters are given on the command line as `--name value`. See `nextflow_schema
 |-----------|-------------|---------|
 | `--fasta` | Aligned FASTA (or unaligned with `--mafft`). If unset, sequences are downloaded from Pathoplexus | |
 | `--metadata` | Pathoplexus metadata TSV. Required with `--fasta` | |
-| `--mafft` | Align sequences with MAFFT before cleaning | `false` |
+| `--mafft` | Align sequences with MAFFT before cleaning. Skipped if the input is already aligned | `false` |
 | `--organism` | LAPIS organism slug used for download | `ebola-bdbv` |
 | `--scope` | Countries to download: `drc`, a comma-separated list such as `drc,kenya`, or `outbreak` | `drc` |
 | `--max_date` | Latest collection date to download (`YYYY-MM-DD`). Only used when downloading | no upper limit |

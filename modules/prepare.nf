@@ -8,7 +8,20 @@ process mafft {
 
   script:
     """
-    mafft --auto --thread -1 ${fasta} > ${params.prefix}.mafft.fasta
+    # An input that is already aligned (for example from Pathoplexus) is not re-aligned: MAFFT would
+    # change the number of columns, and the trim and mask positions refer to the original alignment
+    # (exit 0 = aligned, 1 = not aligned; anything else means the check itself failed, so stop)
+    status=0
+    check_alignment.py --quiet ${fasta} || status=\$?
+    if [ "\$status" -eq 0 ]; then
+        echo "Input is already aligned (all sequences the same length): skipping MAFFT and using it as it is"
+        cp -L ${fasta} ${params.prefix}.mafft.fasta
+    elif [ "\$status" -eq 1 ]; then
+        mafft --auto --thread -1 ${fasta} > ${params.prefix}.mafft.fasta
+    else
+        echo "ERROR: could not check whether ${fasta} is aligned (check_alignment.py exited with status \$status)" >&2
+        exit 1
+    fi
     """
 }
 

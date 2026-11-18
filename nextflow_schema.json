@@ -188,14 +188,6 @@
           "description": "IQ-TREE random seed",
           "default": 42
         },
-        "container_platform": {
-          "type": "string",
-          "title": "Docker image platform",
-          "description": "Which build of the Docker image to run. Leave on auto unless you have a reason to change it",
-          "default": "auto",
-          "enum": ["auto", "native", "linux/amd64", "linux/arm64"],
-          "help_text": "auto runs the amd64 image on Apple Silicon Macs, where it is faster than the native arm64 build (IQ-TREE's arm64 build uses a slower kernel); every other machine runs its native image. This needs Rosetta emulation turned on in Docker Desktop (Settings > General > 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon'); without it the amd64 image runs under much slower emulation, and you should choose native. native always uses the image for the machine's own architecture. Only applies to Docker runs."
-        },
         "aliases_file": {
           "type": "string",
           "title": "Aliases file",
@@ -247,6 +239,20 @@
           "help_text": "Defaults to the SLACK_WEBHOOK_URL environment variable. Prefer the environment variable so the URL is not on the command line. The URL is never written to the run log."
         }
       }
+    },
+    "advanced_options": {
+      "title": "Advanced Options",
+      "type": "object",
+      "description": "These options are available but presets are recommended.",
+      "properties": {
+        "container_platform": {
+          "type": "string",
+          "title": "Docker image platform",
+          "description": "Which build of the Docker image to run. Leave on auto unless you have a reason to change it",
+          "default": "auto",
+          "enum": ["auto", "native", "linux/amd64", "linux/arm64"],
+          "help_text": "auto runs the amd64 image on Apple Silicon Macs, where it is faster than the native arm64 build (IQ-TREE's arm64 build uses a slower kernel); every other machine runs its native image. This needs Rosetta emulation turned on in Docker Desktop (Settings > General > 'Use Rosetta for x86_64/amd64 emulation on Apple Silicon'); without it the amd64 image runs under much slower emulation, and you should choose native. native always uses the image for the machine's own architecture. Only applies to Docker runs."
+        },
     },
     "miscellaneous_options": {
       "title": "Miscellaneous Options",

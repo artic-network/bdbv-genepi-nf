@@ -63,7 +63,7 @@ Health checks (update runs) are the final step. Review `health_check_report.txt`
 | `--scope`, `--organism` | Download scope (`drc`, `drc,kenya`, `outbreak`) and LAPIS organism |
 | `--max_date` | Latest collection date to download (`YYYY-MM-DD`; default no upper limit) |
 | `--pathoplexus_filters` | Extra Pathoplexus filters as free text in URL query-string form, e.g. `"geoLocAdmin1=Ituri&completenessFrom=0.9"` (`&` between filters; `From`/`To` for ranges, `.regex`, `.isNull`; repeat a key for either value). Only used when downloading. See the README |
-| `--mafft` | Run MAFFT before cleaning |
+| `--mafft` | Run MAFFT before cleaning (skipped if the input is already aligned) |
 | `--min_date` | Remove sequences dated before this (`YYYY-MM-DD`) |
 | `--trim_start`, `--trim_end` | Alignment positions to keep, 1-based inclusive (default `47` and `18851`) |
 | `--mask_sites`, `--mask_sites_file` | 1-based positions to mask to N (comma-separated list, or a file with one per line). The file defaults to `data/mask_sites.txt`; use `--mask_sites_file false` to mask none |

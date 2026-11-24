@@ -13,6 +13,18 @@ class RunLog {
         return text?.replaceAll(/(--slack_webhook[ =])\S+/, '$1<redacted>')
     }
 
+    /** Exit status of a task in words: out of memory and out of time are the common causes of a stop. */
+    static String describe(Map t) {
+        def exit = t.exit
+        if ( exit == '137' )
+            return 'exit 137: killed, usually because it ran out of memory'
+        if ( exit == '143' )
+            return 'exit 143: terminated'
+        if ( exit in [null, '', '-'] && t.status == 'FAILED' )
+            return 'no exit status: stopped before finishing, usually because it exceeded its time limit' + (t.time ? " (${t.time})" : '')
+        return "exit ${exit}"
+    }
+
     static void write(workflow, Map params) {
         def outdir = params.outdir.toString()
         def trace = Nextflow.file("${outdir}/execution/trace.txt")
@@ -32,12 +44,14 @@ class RunLog {
         out << "Finished:  ${workflow.complete ?: new Date()}\n"
         out << "Status:    ${workflow.success ? 'SUCCESS' : 'FAILED'}\n"
         if ( failed )
-            out << "Failed:    ${failed.collect { "${it.name} (exit ${it.exit})" }.join(', ')}\n"
+            out << "${workflow.success ? 'Retried:   ' : 'Failed:    '}${failed.collect { "${it.name} (${describe(it)})" }.join(', ')}\n"
         out << "Command:   ${redact(workflow.commandLine)}\n"
         out << "Output:    ${outdir}\n"
         out << "Prefix:    ${params.prefix}\n"
         out << "Pipeline:  ${workflow.manifest?.name ?: ''} ${workflow.revision ?: ''} (Nextflow ${workflow.nextflow.version})\n"
         out << "Container: ${workflow.container ?: '(none)'}\n"
+        out << "Host:      ${System.getProperty('os.name')} ${System.getProperty('os.version')} ${System.getProperty('os.arch')}, " +
+               "${Runtime.runtime.availableProcessors()} CPUs, Java ${System.getProperty('java.version')}\n"
         out << "\nParameters:\n"
         params.sort().each { k, v ->
             if ( v != null && !(v instanceof Map) && !(k in ['help', 'version', 'email', 'email_on_fail', 'plaintext_email',
@@ -56,7 +70,9 @@ class RunLog {
 
         if ( trace.exists() ) {
             tasks.each { t ->
-                out << "── ${t.name} ── [${t.submit}] ${t.status}, exit ${t.exit}\n"
+                out << "── ${t.name} ── [${t.submit}] ${t.status}, ${describe(t)}\n"
+                out << "  attempt ${t.attempt ?: '?'}; requested ${t.memory ?: '?'} memory, ${t.time ?: '?'} time; " +
+                       "ran ${t.realtime ?: '?'}, peak memory ${t.peak_rss ?: '?'}\n"
                 def logf = t.workdir ? Nextflow.file("${t.workdir}/.command.log") : null
                 if ( logf && logf.exists() && logf.size() > 0 )
                     out << logf.text.trim() << "\n"
@@ -66,6 +82,16 @@ class RunLog {
             }
         } else {
             out << "(no trace file found, so no task output could be collected)\n"
+        }
+
+        // Nextflow's own log (Docker errors, executor messages) is the last place a cause can hide
+        if ( !workflow.success ) {
+            def logPath = (workflow.commandLine =~ /-log\s+('([^']+)'|(\S+))/).with { it.find() ? (it.group(2) ?: it.group(3)) : null }
+            def nfLog = Nextflow.file(logPath ?: "${workflow.launchDir}/.nextflow.log")
+            if ( nfLog.exists() ) {
+                out << "── Last lines of ${nfLog.name} ──\n"
+                out << redact(nfLog.text.readLines().takeRight(60).join("\n")) << "\n\n"
+            }
         }
 
         // Both onComplete and onError run on failure: replace the file rather than overwrite in place
